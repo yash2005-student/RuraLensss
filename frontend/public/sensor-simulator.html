@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RuralLens - Sensor Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9fafb;
+            color: #111827;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            color: #3b82f6;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        .status-bar {
+            background: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse-soft 2s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-bar > div {
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+
+        .status-bar strong {
+            color: #111827;
+            font-weight: 600;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            background: white;
+            border-radius: 12px;
+            padding: 6px;
+            margin-bottom: 24px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .section-badge {
+            background: #eff6ff;
+            color: #3b82f6;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Summary Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .summary-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 4px;
+        }
+
+        .summary-label {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        /* Scenario Buttons */
+        .scenario-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .scenario-btn {
+            background: white;
+            border: 2px solid #e5e7eb;
+            color: #111827;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .scenario-btn:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            transform: translateY(-2px);
+        }
+
+        .scenario-btn.reset-btn {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+
+        .scenario-btn.reset-btn:hover {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+
+        /* Data Tables */
+        .data-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+
+        .data-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #f9fafb;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #111827;
+            font-size: 0.9rem;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        /* Sliders */
+        .table-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .table-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .table-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .table-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #2563eb;
+        }
+
+        .table-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .table-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            background: #2563eb;
+        }
+
+        .slider-value {
+            min-width: 90px;
+            text-align: right;
+            font-weight: 600;
+            color: #111827;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Status Indicators */
+        .status-indicator-small {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-good-bg { background: #10b981; }
+        .status-warning-bg { background: #f59e0b; }
+        .status-critical-bg { background: #ef4444; }
+
+        /* Info Panel */
+        .info-panel {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            margin-top: 24px;
+        }
+
+        .info-panel h3 {
+            color: #111827;
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .info-item {
+            text-align: center;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .tabs-container {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                min-width: 100%;
+            }
+
+            .scenario-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                overflow-x: auto;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span class="logo">🏘️</span>
+                <span>RuralLens Sensor Simulator</span>
+            </h1>
+            <p class="subtitle">Smart Village Infrastructure Control Panel - Real-time Monitoring & Control</p>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Connecting to server...</span>
+            </div>
+            <div>
+                <strong>WebSocket:</strong> <span id="wsUrl">ws://localhost:3001</span>
+            </div>
+            <div>
+                <strong>Last Update:</strong> <span id="lastUpdate">Never</span>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+            <button class="tab-btn" onclick="switchTab('water')">Water</button>
+            <button class="tab-btn" onclick="switchTab('power')">Power</button>
+            <button class="tab-btn" onclick="switchTab('sensors')">IoT Sensors</button>
+            <button class="tab-btn" onclick="switchTab('environment')">Environment</button>
+            <button class="tab-btn" onclick="switchTab('flood')">Flood Control</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="section-header">
+                <div class="section-title">System Overview</div>
+            </div>
+
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value" id="overview-tanks">0</div>
+                    <div class="summary-label">Water Tanks</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="overview-power">0</div>
+                    <div class="summary-label">Power Nodes</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="overview-sensors">0</div>
+                    <div class="summary-label">IoT Sensors</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">4</div>
+                    <div class="summary-label">Environment Stations</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">4</div>
+                    <div class="summary-label">Drainage Points</div>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <div class="section-title">Quick Scenarios</div>
+            </div>
+            <div class="scenario-buttons">
+                <button class="scenario-btn" onclick="simulateScenario('water_crisis')">💧 Water Crisis</button>
+                <button class="scenario-btn" onclick="simulateScenario('power_outage')">⚡ Power Outage</button>
+                <button class="scenario-btn" onclick="simulateScenario('heavy_rain')">🌧️ Heavy Rainfall</button>
+                <button class="scenario-btn" onclick="simulateScenario('air_pollution')">💨 Air Pollution</button>
+                <button class="scenario-btn" onclick="simulateScenario('flood_warning')">🌊 Flood Warning</button>
+                <button class="scenario-btn reset-btn" onclick="resetToNormal()">🔄 Reset to Normal</button>
+            </div>
+
+            <div class="info-panel">
+                <h3>System Statistics</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Water Tanks</div>
+                        <div class="info-value" id="totalTanks">0</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Power Nodes</div>
+                        <div class="info-value" id="totalPower">0</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">IoT Sensors</div>
+                        <div class="info-value" id="totalSensors">0</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Avg Water Level</div>
+                        <div class="info-value" id="avgWater">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Water Tab -->
+        <div id="tab-water" class="tab-content">
+            <div class="section-header">
+                <div class="section-title">Water Tank Controls</div>
+                <span class="section-badge" id="water-count">0 Tanks</span>
+            </div>
+            <div class="data-table" id="waterTanksTable">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Tank Name</th>
+                            <th>Capacity</th>
+                            <th>Current Level</th>
+                            <th style="width: 40%">Adjust Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 30px; color: #9ca3af;">
+                                Waiting for data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Power Tab -->
+        <div id="tab-power" class="tab-content">
+            <div class="section-header">
+                <div class="section-title">Power Transformer Controls</div>
+                <span class="section-badge" id="power-count">0 Nodes</span>
+            </div>
+            <div class="data-table" id="powerNodesTable">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Node Name</th>
+                            <th>Capacity</th>
+                            <th>Load %</th>
+                            <th style="width: 40%">Adjust Load</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 30px; color: #9ca3af;">
+                                Waiting for data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sensors Tab -->
+        <div id="tab-sensors" class="tab-content">
+            <div class="section-header">
+                <div class="section-title">IoT Sensor Controls</div>
+                <span class="section-badge" id="sensor-count">0 Sensors</span>
+            </div>
+            <div class="data-table" id="sensorsTable">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Sensor Name</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                            <th style="width: 40%">Adjust Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 30px; color: #9ca3af;">
+                                Waiting for data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Environment Tab -->
+        <div id="tab-environment" class="tab-content">
+            <div class="section-header">
+                <div class="section-title">Environmental Monitoring</div>
+                <span class="section-badge">4 Stations</span>
+            </div>
+            <div class="data-table" id="environmentTable"></div>
+        </div>
+
+        <!-- Flood Tab -->
+        <div id="tab-flood" class="tab-content">
+            <div class="section-header">
+                <div class="section-title">Flood & Drainage Systems</div>
+                <span class="section-badge">4 Drainage Points</span>
+            </div>
+            <div class="data-table" id="floodTable"></div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let villageData = null;
+        let reconnectInterval = null;
+        let currentTab = 'overview';
+
+        // Tab Switching
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // Connect to WebSocket
+        function connectWebSocket() {
+            // Auto-detect environment: use WSS for production, WS for localhost
+            const WS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'ws://localhost:3001'
+                : 'wss://village-digital-twin.onrender.com';
+            
+            console.log('🔌 Connecting to:', WS_URL);
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('✅ Connected to RuralLens Digital Twin');
+                document.getElementById('statusDot').classList.remove('disconnected');
+                const serverType = WS_URL.includes('localhost') ? 'Local Server' : 'Production Server';
+                document.getElementById('statusText').textContent = `Connected to ${serverType}`;
+                document.getElementById('wsUrl').textContent = WS_URL;
+                if (reconnectInterval) {
+                    clearInterval(reconnectInterval);
+                    reconnectInterval = null;
+                }
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (message.data) {
+                    villageData = message.data;
+                    renderAllControls();
+                    updateStats();
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('❌ WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('❌ Disconnected from server');
+                document.getElementById('statusDot').classList.add('disconnected');
+                document.getElementById('statusText').textContent = 'Disconnected - Reconnecting...';
+                
+                if (!reconnectInterval) {
+                    reconnectInterval = setInterval(() => {
+                        console.log('🔄 Attempting to reconnect...');
+                        connectWebSocket();
+                    }, 5000);
+                }
+            };
+        }
+
+        // Send manual update
+        function sendUpdate(category, id, field, value) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'manual_update',
+                    payload: { category, id, field, value }
+                }));
+            }
+        }
+
+        // Simulate scenario
+        function simulateScenario(scenario) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'simulate_scenario',
+                    scenario: scenario
+                }));
+            }
+        }
+
+        // Reset to normal
+        function resetToNormal() {
+            if (!villageData) return;
+            
+            villageData.waterTanks.forEach(tank => {
+                sendUpdate('waterTanks', tank.id, 'currentLevel', 75);
+            });
+
+            villageData.powerNodes.forEach(node => {
+                sendUpdate('powerNodes', node.id, 'currentLoad', node.capacity * 0.6);
+            });
+
+            alert('✅ All values reset to normal operating levels');
+        }
+
+        // Render all controls
+        function renderAllControls() {
+            if (!villageData) return;
+            renderWaterTanks();
+            renderPowerNodes();
+            renderSensors();
+            renderEnvironmentSensors();
+            renderFloodSensors();
+        }
+
+        // Render Water Tanks
+        function renderWaterTanks() {
+            const container = document.getElementById('waterTanksTable');
+            if (!villageData || !villageData.waterTanks) return;
+            
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Tank Name</th>
+                            <th>Capacity</th>
+                            <th>Current Level</th>
+                            <th style="width: 40%">Adjust Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${villageData.waterTanks.map(tank => {
+                            const status = tank.currentLevel > 50 ? 'good' : tank.currentLevel > 30 ? 'warning' : 'critical';
+                            return `
+                                <tr>
+                                    <td><span class="status-indicator-small status-${status}-bg"></span></td>
+                                    <td><strong>${tank.name}</strong></td>
+                                    <td>${tank.capacity.toLocaleString()} L</td>
+                                    <td><span class="slider-value">${tank.currentLevel.toFixed(1)}%</span></td>
+                                    <td>
+                                        <div class="table-slider-container">
+                                            <input type="range" class="table-slider" min="0" max="100" step="0.1" 
+                                                   value="${tank.currentLevel}" 
+                                                   oninput="this.nextElementSibling.textContent = parseFloat(this.value).toFixed(1) + '%'"
+                                                   onchange="updateTankLevel('${tank.id}', this.value)">
+                                            <span class="slider-value">${tank.currentLevel.toFixed(1)}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = html;
+        }
+
+        // Render Power Nodes
+        function renderPowerNodes() {
+            const container = document.getElementById('powerNodesTable');
+            if (!villageData || !villageData.powerNodes) return;
+            
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Node Name</th>
+                            <th>Capacity</th>
+                            <th>Load %</th>
+                            <th style="width: 40%">Adjust Load</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${villageData.powerNodes.map(node => {
+                            const loadPercent = (node.currentLoad / node.capacity) * 100;
+                            const status = loadPercent > 95 ? 'critical' : loadPercent > 80 ? 'warning' : 'good';
+                            return `
+                                <tr>
+                                    <td><span class="status-indicator-small status-${status}-bg"></span></td>
+                                    <td><strong>${node.name}</strong></td>
+                                    <td>${node.capacity} kW</td>
+                                    <td><span class="slider-value">${loadPercent.toFixed(1)}%</span></td>
+                                    <td>
+                                        <div class="table-slider-container">
+                                            <input type="range" class="table-slider" min="0" max="${node.capacity}" step="1" 
+                                                   value="${node.currentLoad}" 
+                                                   oninput="this.nextElementSibling.textContent = this.value + ' kW'"
+                                                   onchange="updatePowerLoad('${node.id}', this.value)">
+                                            <span class="slider-value">${node.currentLoad} kW</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = html;
+        }
+
+        // Render Sensors
+        function renderSensors() {
+            const container = document.getElementById('sensorsTable');
+            if (!villageData || !villageData.sensors) return;
+            
+            const displayLimit = 12;
+            const keySensors = [];
+            const seenTypes = new Set();
+            
+            for (const sensor of villageData.sensors) {
+                if (!seenTypes.has(sensor.type) || keySensors.length < displayLimit) {
+                    keySensors.push(sensor);
+                    seenTypes.add(sensor.type);
+                }
+                if (keySensors.length >= displayLimit) break;
+            }
+            
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Sensor Name</th>
+                            <th>Type</th>
+                            <th>Current Value</th>
+                            <th style="width: 40%">Adjust Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${keySensors.map(sensor => {
+                            const maxValue = sensor.type === 'weather' || sensor.type === 'temperature' ? 45 : 
+                                            sensor.type === 'air_quality' ? 500 : 100;
+                            return `
+                                <tr>
+                                    <td><span class="status-indicator-small status-good-bg"></span></td>
+                                    <td><strong>${sensor.name}</strong></td>
+                                    <td style="text-transform: capitalize;">${sensor.type.replace(/_/g, ' ')}</td>
+                                    <td><span class="slider-value">${sensor.value.toFixed(1)} ${sensor.unit}</span></td>
+                                    <td>
+                                        <div class="table-slider-container">
+                                            <input type="range" class="table-slider" min="0" max="${maxValue}" step="0.1" 
+                                                   value="${sensor.value}" 
+                                                   oninput="this.nextElementSibling.textContent = parseFloat(this.value).toFixed(1) + ' ${sensor.unit}'"
+                                                   onchange="updateSensorValue('${sensor.id}', this.value)">
+                                            <span class="slider-value">${sensor.value.toFixed(1)} ${sensor.unit}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = html;
+        }
+
+        // Render Environment Sensors
+        function renderEnvironmentSensors() {
+            const container = document.getElementById('environmentTable');
+            const envStations = [
+                { id: 'env-1', name: 'North Station', aqi: 45, pm25: 12.5 },
+                { id: 'env-2', name: 'South Station', aqi: 78, pm25: 32.4 },
+                { id: 'env-3', name: 'East Station', aqi: 92, pm25: 48.2 },
+                { id: 'env-4', name: 'West Station', aqi: 156, pm25: 68.2 }
+            ];
+            
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Station Name</th>
+                            <th>PM2.5</th>
+                            <th>AQI</th>
+                            <th style="width: 35%">Adjust AQI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${envStations.map(station => {
+                            const status = station.aqi > 100 ? 'critical' : station.aqi > 50 ? 'warning' : 'good';
+                            const aqiLabel = station.aqi <= 50 ? 'Good' : station.aqi <= 100 ? 'Moderate' : station.aqi <= 150 ? 'Unhealthy' : 'Very Unhealthy';
+                            return `
+                                <tr>
+                                    <td><span class="status-indicator-small status-${status}-bg"></span></td>
+                                    <td><strong>${station.name}</strong></td>
+                                    <td>${station.pm25} μg/m³</td>
+                                    <td><span class="slider-value">${station.aqi} (${aqiLabel})</span></td>
+                                    <td>
+                                        <div class="table-slider-container">
+                                            <input type="range" class="table-slider" min="0" max="300" step="1" 
+                                                   value="${station.aqi}" 
+                                                   oninput="this.nextElementSibling.textContent = this.value">
+                                            <span class="slider-value">${station.aqi}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = html;
+        }
+
+        // Render Flood Sensors
+        function renderFloodSensors() {
+            const container = document.getElementById('floodTable');
+            const drainagePoints = [
+                { id: 'drain-1', name: 'North Drain', capacity: 4000, flow: 2800, blockage: 15 },
+                { id: 'drain-2', name: 'South Drain', capacity: 6000, flow: 5200, blockage: 35 },
+                { id: 'drain-3', name: 'East Drain', capacity: 8000, flow: 7200, blockage: 68 },
+                { id: 'drain-4', name: 'West Drain', capacity: 5000, flow: 4600, blockage: 92 }
+            ];
+            
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Drainage Point</th>
+                            <th>Capacity</th>
+                            <th>Blockage</th>
+                            <th style="width: 35%">Adjust Flow</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${drainagePoints.map(drain => {
+                            const status = drain.blockage > 70 ? 'critical' : drain.blockage > 40 ? 'warning' : 'good';
+                            return `
+                                <tr>
+                                    <td><span class="status-indicator-small status-${status}-bg"></span></td>
+                                    <td><strong>${drain.name}</strong></td>
+                                    <td>${drain.capacity} L/min</td>
+                                    <td>${drain.blockage}%</td>
+                                    <td>
+                                        <div class="table-slider-container">
+                                            <input type="range" class="table-slider" min="0" max="${drain.capacity}" step="10" 
+                                                   value="${drain.flow}" 
+                                                   oninput="this.nextElementSibling.textContent = this.value + ' L/min'">
+                                            <span class="slider-value">${drain.flow} L/min</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = html;
+        }
+
+        // Update functions
+        function updateTankLevel(id, value) {
+            sendUpdate('waterTanks', id, 'currentLevel', parseFloat(value));
+        }
+
+        function updatePowerLoad(id, value) {
+            sendUpdate('powerNodes', id, 'currentLoad', parseInt(value));
+        }
+
+        function updateSensorValue(id, value) {
+            sendUpdate('sensors', id, 'value', parseFloat(value));
+        }
+
+        // Update statistics
+        function updateStats() {
+            if (!villageData) return;
+
+            const tankCount = villageData.waterTanks?.length || 0;
+            const powerCount = villageData.powerNodes?.length || 0;
+            const sensorCount = villageData.sensors?.length || 0;
+
+            document.getElementById('totalTanks').textContent = tankCount;
+            document.getElementById('totalPower').textContent = powerCount;
+            document.getElementById('totalSensors').textContent = sensorCount;
+
+            document.getElementById('overview-tanks').textContent = tankCount;
+            document.getElementById('overview-power').textContent = powerCount;
+            document.getElementById('overview-sensors').textContent = sensorCount;
+
+            if (document.getElementById('water-count')) {
+                document.getElementById('water-count').textContent = tankCount + ' Tanks';
+            }
+            if (document.getElementById('power-count')) {
+                document.getElementById('power-count').textContent = powerCount + ' Nodes';
+            }
+            if (document.getElementById('sensor-count')) {
+                document.getElementById('sensor-count').textContent = sensorCount + ' Sensors';
+            }
+
+            if (villageData.waterTanks && villageData.waterTanks.length > 0) {
+                const avgWater = villageData.waterTanks.reduce((sum, t) => sum + t.currentLevel, 0) / villageData.waterTanks.length;
+                document.getElementById('avgWater').textContent = avgWater.toFixed(1) + '%';
+            }
+        }
+
+        // Initialize on page load
+        window.onload = () => {
+            connectWebSocket();
+            // Initialize static data immediately
+            renderTrafficSignals();
+            renderEnvironmentSensors();
+            renderFloodSensors();
+        };
+    </script>
+</body>
+</html>

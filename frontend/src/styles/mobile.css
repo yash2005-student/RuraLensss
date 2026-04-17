@@ -1,0 +1,379 @@
+/* Mobile-Specific Styles for Android APK */
+/* These styles only load when running in Capacitor */
+/* IMPORTANT: Only enhance, don't break existing layouts */
+
+/* Enhanced touch targets for mobile */
+body.mobile-app {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Safe area utilities */
+.mobile-app .safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.mobile-app .safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Better scrolling */
+.mobile-app * {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix root container for mobile */
+.mobile-app #root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Larger tap targets ONLY for interactive buttons (not text/spans) */
+.mobile-app button:not([class*="text-"]):not([class*="w-"]):not([class*="h-"]) {
+  min-height: 44px;
+}
+
+/* Only apply min-width to primary action buttons */
+.mobile-app button[class*="bg-"]:not([class*="icon"]):not([class*="w-"]) {
+  min-width: 44px;
+}
+
+/* Links that are clearly clickable */
+.mobile-app a[class*="btn"],
+.mobile-app a[class*="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Mobile-optimized TopNav - ensure visibility and tap targets */
+.mobile-app nav {
+  min-height: 64px;
+  /* Add extra padding at top for notification bar */
+  padding-top: max(12px, env(safe-area-inset-top));
+}
+
+/* Ensure TopNav items are visible and tappable */
+.mobile-app nav button,
+.mobile-app nav a {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px;
+}
+
+/* SIDEBAR - CRITICAL FIX FOR MOBILE */
+.mobile-app aside {
+  /* Ensure sidebar is properly positioned on mobile */
+  position: fixed;
+  z-index: 30;
+}
+
+/* Sidebar navigation - ALWAYS visible when sidebar is open */
+.mobile-app aside nav {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Sidebar menu items - ALWAYS render and be visible */
+.mobile-app aside nav button {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  min-height: 44px;
+}
+
+/* Sidebar icons */
+.mobile-app aside button svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+/* Mobile Dashboard Cards - Slightly more spacing */
+.mobile-app .dashboard-card {
+  padding: 16px;
+}
+
+/* DON'T override text sizes inside cards */
+.mobile-app h1 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.mobile-app h2 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.mobile-app h3 {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+}
+
+/* Mobile form inputs - DON'T override if already styled */
+.mobile-app input[type="text"],
+.mobile-app input[type="email"],
+.mobile-app input[type="password"],
+.mobile-app input[type="number"],
+.mobile-app textarea,
+.mobile-app select {
+  font-size: 16px; /* Prevents zoom on iOS */
+  min-height: 44px;
+}
+
+/* Mobile buttons - enhance but don't break */
+.mobile-app button:not(.icon-only):not([class*="absolute"]) {
+  min-height: 44px;
+  padding: 10px 20px;
+}
+
+/* Icon buttons maintain square shape */
+.mobile-app button.icon-only,
+.mobile-app [class*="w-6"],
+.mobile-app [class*="w-8"],
+.mobile-app [class*="w-10"] {
+  /* Don't override small icon buttons */
+  min-height: auto;
+  min-width: auto;
+}
+
+/* Mobile Card Hover Effects - Convert to active/touch */
+.mobile-app .card-hover:hover {
+  transform: none;
+}
+
+.mobile-app .card-hover:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* Better touch feedback ONLY for interactive elements */
+.mobile-app button:active,
+.mobile-app a[href]:active {
+  opacity: 0.7;
+}
+
+/* Mobile-specific animations - faster for better perceived performance */
+.mobile-app .transition-all,
+.mobile-app .transition-transform {
+  transition-duration: 200ms;
+}
+
+/* Mobile optimized scrollbar - Hidden */
+.mobile-app ::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-app {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Mobile landscape mode adjustments */
+@media (orientation: landscape) {
+  .mobile-app nav {
+    min-height: 56px;
+  }
+}
+
+/* Ensure sidebar works properly on mobile */
+@media (max-width: 768px) {
+  /* Sidebar positioning with safe area */
+  .mobile-app aside {
+    position: fixed;
+    left: 0;
+    top: calc(64px + env(safe-area-inset-top));
+    bottom: env(safe-area-inset-bottom);
+    width: 280px !important;
+    z-index: 30;
+  }
+  
+  /* When sidebar is open (not collapsed), ensure it's visible */
+  .mobile-app aside:not(.-translate-x-full) {
+    transform: translateX(0) !important;
+  }
+  
+  /* Force sidebar content to be visible when sidebar is open */
+  .mobile-app aside:not(.-translate-x-full) nav {
+    display: flex !important;
+    flex-direction: column !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Force all sidebar buttons to be visible */
+  .mobile-app aside:not(.-translate-x-full) nav button {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Ensure sidebar text is visible */
+  .mobile-app aside:not(.-translate-x-full) nav button span {
+    display: inline !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Login page mobile optimizations */
+.mobile-app .min-h-screen {
+  /* Ensure login page is scrollable on small screens */
+  min-height: 100vh;
+}
+
+/* Make sure demo buttons are visible and tappable */
+.mobile-app [class*="grid-cols-3"] button,
+.mobile-app [class*="sm:grid-cols-3"] button {
+  min-height: 48px;
+  padding: 14px 20px;
+  font-size: 0.95rem;
+}
+
+/* Role selection cards on login */
+.mobile-app [class*="md:grid-cols-3"] {
+  /* Ensure role cards are properly displayed */
+  gap: 16px;
+}
+
+/* Ensure all ACTUAL interactive elements are easily tappable */
+.mobile-app button[role="button"],
+.mobile-app a[role="button"],
+.mobile-app [onclick] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Status bar with safe area */
+.mobile-app .status-bar {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Back button on login page */
+.mobile-app [class*="ArrowLeft"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Disable text selection to feel like an app */
+.mobile-app {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Allow text selection on inputs only */
+.mobile-app input, 
+.mobile-app textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  font-size: 16px !important; /* Stops iOS zooming */
+}
+
+/* Fix Map View on Mobile */
+.mobile-app .mapboxgl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Style MapLibre Navigation & Fullscreen Controls for Mobile */
+.mobile-app .maplibregl-ctrl-group {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  overflow: hidden;
+}
+
+.mobile-app .maplibregl-ctrl-group button {
+  background-color: transparent !important;
+  width: 44px !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.mobile-app .maplibregl-ctrl-group button:last-child {
+  border-bottom: none !important;
+}
+
+.mobile-app .maplibregl-ctrl-group button:active {
+  background-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+/* Hide default icons and use custom SVGs for mobile */
+.mobile-app .maplibregl-ctrl-icon {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+/* Zoom In Button - Plus sign (Cyan) */
+.mobile-app .maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='5' x2='12' y2='19'%3E%3C/line%3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3C/svg%3E") !important;
+  background-size: 22px 22px !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Zoom Out Button - Minus sign (Cyan) */
+.mobile-app .maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3C/svg%3E") !important;
+  background-size: 22px 22px !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Fullscreen Button - Expand icon (Cyan) */
+.mobile-app .maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='15 3 21 3 21 9'%3E%3C/polyline%3E%3Cpolyline points='9 21 3 21 3 15'%3E%3C/polyline%3E%3Cline x1='21' y1='3' x2='14' y2='10'%3E%3C/line%3E%3Cline x1='3' y1='21' x2='10' y2='14'%3E%3C/line%3E%3C/svg%3E") !important;
+  background-size: 20px 20px !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Fullscreen Exit Button - Shrink icon (Cyan) */
+.mobile-app .maplibregl-ctrl-shrink .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 14 10 14 10 20'%3E%3C/polyline%3E%3Cpolyline points='20 10 14 10 14 4'%3E%3C/polyline%3E%3Cline x1='14' y1='10' x2='21' y2='3'%3E%3C/line%3E%3Cline x1='3' y1='21' x2='10' y2='14'%3E%3C/line%3E%3C/svg%3E") !important;
+  background-size: 20px 20px !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Compass Button - Arrow icon (Pink) */
+.mobile-app .maplibregl-ctrl-compass .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f472b6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='12 2 19 21 12 17 5 21 12 2'%3E%3C/polygon%3E%3C/svg%3E") !important;
+  background-size: 20px 20px !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Scale control styling */
+.mobile-app .maplibregl-ctrl-scale {
+  background-color: rgba(15, 23, 42, 0.85) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  padding: 2px 6px !important;
+}
+
+/* Remove outlines on tap */
+.mobile-app * {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+/* Smooth scrolling for lists */
+.mobile-app main {
+  -webkit-overflow-scrolling: touch;
+}

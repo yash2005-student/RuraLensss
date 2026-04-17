@@ -1,0 +1,46 @@
+{
+  "name": "ruralens",
+  "version": "1.0.0",
+  "description": "RuraLens - Smart village infrastructure monitoring with 3D visualization and real-time analytics",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:mobile": "npm run build && npx cap sync android",
+    "preview": "vite preview",
+    "server": "node backend/server.js",
+    "mobile:sync": "npx cap sync android",
+    "mobile:open": "npx cap open android",
+    "mobile:dev": "npm run build:mobile && npm run mobile:open"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "chart.js": "^4.4.1",
+    "d3-scale-chromatic": "^3.1.0",
+    "date-fns": "^3.3.0",
+    "framer-motion": "^11.18.2",
+    "lucide-react": "^0.344.0",
+    "maplibre-gl": "^4.0.0",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-countup": "^6.5.3",
+    "react-dom": "^18.2.0",
+    "react-force-graph-2d": "^1.29.0",
+    "react-map-gl": "^7.1.7",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@types/react": "^18.2.56",
+    "@types/react-dom": "^18.2.19",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.17",
+    "baseline-browser-mapping": "^2.9.11",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.0"
+  }
+}
