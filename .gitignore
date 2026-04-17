@@ -1,0 +1,93 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+dist/
+build/
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.docker
+backend/.env
+frontend/.env
+frontend/.env.development
+frontend/.env.production
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Android
+android/app/build/
+android/app/release/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/google-services.json
+*.apk
+*.aab
+*.dex
+*.class
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+venc/
+ENV/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Docker
+.dockerignore
+
+# Uploads & User Content
+backend/uploads/
+sample-docs/
+
+# Pathway Cache
+/tmp/pathway-cache/
+
+# Capacitor
+.cap-backup/
+android/app/src/main/assets/public/
+capacitor.config.ts.bak
+
+# iOS (if you add it later)
+ios/App/Pods/
+ios/App/build/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+*.ipa
