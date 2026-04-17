@@ -26,7 +26,7 @@ app.add_middleware(
 
 # Global model instance
 predictor = None
-MODEL_PATH = "models/gnn_model.pt"
+MODEL_PATH = os.getenv("MODEL_PATH", "models/gnn_model.pt")
 
 
 class NodeFeature(BaseModel):

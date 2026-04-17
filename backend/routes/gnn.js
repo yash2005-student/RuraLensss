@@ -2,7 +2,12 @@ import express from 'express';
 import gnnService from '../utils/gnnImpactService.js';
 
 const router = express.Router();
-const PYTHON_GNN_API_URL = process.env.PYTHON_GNN_API_URL || 'http://localhost:8001';
+const DEFAULT_RENDER_GNN_API_URL = 'https://ruralens-gnn-api.onrender.com';
+const PYTHON_GNN_API_URL = process.env.PYTHON_GNN_API_URL || (
+  process.env.NODE_ENV === 'production'
+    ? DEFAULT_RENDER_GNN_API_URL
+    : 'http://localhost:8001'
+);
 
 function clamp(value, min = 0, max = 1) {
   return Math.max(min, Math.min(max, value));
