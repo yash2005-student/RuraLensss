@@ -4,6 +4,7 @@
  */
 
 import type { GraphVisualizationData } from '../types/graph-visualization';
+import { API_URL } from '../config/api';
 
 export interface ImpactAnalysisRequest {
   nodeId: string;
@@ -32,7 +33,7 @@ export interface ImpactAnalysisResponse {
 class GNNImpactService {
   private baseUrl: string;
 
-  constructor(baseUrl: string = 'http://localhost:3001') {
+  constructor(baseUrl: string = API_URL) {
     this.baseUrl = baseUrl;
   }
 

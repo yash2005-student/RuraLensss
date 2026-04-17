@@ -134,7 +134,7 @@ const GNNImpactDemo: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [useMockData, setUseMockData] = useState(true);
+  const [useMockData, setUseMockData] = useState(false);
   const [accumulatedFailures, setAccumulatedFailures] = useState<Set<string>>(new Set());
   const [combinedGraphData, setCombinedGraphData] = useState<GraphVisualizationData | null>(null);
   
@@ -174,22 +174,13 @@ const GNNImpactDemo: React.FC = () => {
         }, 500);
       } else {
         // Fetch from real backend
-        try {
-          const data = await gnnService.getInfrastructureGraph();
-          setGraphData(data);
-          setLoading(false);
-        } catch (backendError) {
-          console.warn('Backend not available, falling back to mock data:', backendError);
-          setError('Backend not available. Using mock data.');
-          setUseMockData(true); // Auto-switch to mock data
-          setGraphData(MOCK_VISUALIZATION_DATA);
-          setLoading(false);
-        }
+        const data = await gnnService.getInfrastructureGraph();
+        setGraphData(data);
+        setLoading(false);
       }
     } catch (err) {
       console.error('Error loading graph:', err);
-      setError('Using mock data (backend not required).');
-      setGraphData(MOCK_VISUALIZATION_DATA);
+      setError('Backend model inference unavailable. Ensure /api/gnn and Python model API are running.');
       setLoading(false);
     }
   };
@@ -234,29 +225,20 @@ const GNNImpactDemo: React.FC = () => {
         }, 800);
       } else {
         // Call real backend
-        try {
-          const result = await gnnService.predictImpact({
-            nodeId,
-            severity,
-            timestamp: new Date(),
-          });
-          const newAccumulatedFailures = new Set(accumulatedFailures);
-          newAccumulatedFailures.add(nodeId);
-          setAccumulatedFailures(newAccumulatedFailures);
-          setGraphData(result.visualization);
-          setLoading(false);
-        } catch (backendError) {
-          console.warn('Backend not available:', backendError);
-          setError('Backend not available. Showing mock data.');
-          setUseMockData(true); // Auto-switch to mock
-          setGraphData(MOCK_VISUALIZATION_DATA);
-          setLoading(false);
-        }
+        const result = await gnnService.predictImpact({
+          nodeId,
+          severity,
+          timestamp: new Date(),
+        });
+        const newAccumulatedFailures = new Set(accumulatedFailures);
+        newAccumulatedFailures.add(nodeId);
+        setAccumulatedFailures(newAccumulatedFailures);
+        setGraphData(result.visualization);
+        setLoading(false);
       }
     } catch (err) {
       console.error('Error predicting impact:', err);
-      setError('Showing mock data (backend not required).');
-      setGraphData(MOCK_VISUALIZATION_DATA);
+      setError('Model inference failed for this scenario. Check backend and Python model API.');
       setLoading(false);
     }
   };
@@ -405,7 +387,11 @@ const GNNImpactDemo: React.FC = () => {
               onClick={() => {
                 setAccumulatedFailures(new Set());
                 setCombinedGraphData(null);
-                setGraphData(MOCK_VISUALIZATION_DATA);
+                if (useMockData) {
+                  setGraphData(MOCK_VISUALIZATION_DATA);
+                } else {
+                  loadGraphData();
+                }
                 setSelectedNode(null);
               }}
               disabled={loading || accumulatedFailures.size === 0}
@@ -443,7 +429,7 @@ const GNNImpactDemo: React.FC = () => {
             <span>
               <strong>{accumulatedFailures.size} node(s) failed:</strong>{' '}
               {Array.from(accumulatedFailures).map(id => {
-                const node = MOCK_VISUALIZATION_DATA.nodes.find(n => n.id === id);
+                const node = (graphData?.nodes || MOCK_VISUALIZATION_DATA.nodes).find(n => n.id === id);
                 return node?.name || id;
               }).join(', ')}
             </span>

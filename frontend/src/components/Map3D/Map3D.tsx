@@ -3,9 +3,10 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useVillageStore, type GNNInfraNode } from '../../store/villageStore';
 import { Capacitor } from '@capacitor/core';
+import { API_URL } from '../../config/api';
 
 const VILLAGE_CENTER: [number, number] = [73.8567, 18.5204]; // Pune coordinates
-const GNN_API_URL = 'http://localhost:7876';
+const GNN_API_URL = API_URL;
 
 // Node types for adding
 const NODE_TYPES = [
@@ -254,7 +255,12 @@ export default function Map3D() {
   
   const { 
     waterTanks, 
+    waterPumps,
+    waterPipes,
     powerNodes, 
+    buildings,
+    roads,
+    sensors,
     gnnNodes,
     failedNodes,
     setSelectedAsset,
@@ -355,22 +361,55 @@ export default function Map3D() {
     // clearNodeImpacts();
     
     try {
-      // Try to call API, but expect it might fail in dev mode
-      const response = await fetch(`${GNN_API_URL}/api/gnn/predict-structured`, {
+      const requestUrl = `${GNN_API_URL}/api/gnn/predict-structured`;
+      const requestBody = {
+        nodeId: node.id,
+        node_name: node.name,
+        failure_type: failureType,
+        severity: severity,
+        villageState: {
+          waterTanks,
+          waterPumps,
+          waterPipes,
+          powerNodes,
+          buildings,
+          roads,
+          sensors,
+          // Backward-compatible aliases expected by backend graph builder.
+          pumps: waterPumps,
+          pipes: waterPipes,
+        },
+      };
+
+      console.log('[Map3D] Triggering model inference request', {
+        url: requestUrl,
+        nodeId: node.id,
+        nodeName: node.name,
+        failureType,
+        severity,
+      });
+
+      const response = await fetch(requestUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          node_name: node.name,
-          failure_type: failureType,
-          severity: severity,
-        }),
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('[Map3D] Model inference response received', {
+        status: response.status,
+        ok: response.ok,
       });
       
       if (!response.ok) {
-        throw new Error('Prediction failed');
+        const errText = await response.text();
+        throw new Error(`Prediction failed (${response.status}): ${errText}`);
       }
       
       const data = await response.json();
+
+      if (data.modelSource && data.modelSource !== 'python-model') {
+        throw new Error(`Unexpected model source: ${data.modelSource}`);
+      }
       
       if (data.success) {
         // Mark the primary failed node
@@ -380,9 +419,15 @@ export default function Map3D() {
         const currentGnnNodes = useVillageStore.getState().gnnNodes;
         
         // Mark affected nodes with their impact scores
-        if (data.affectedNodes) {
-          data.affectedNodes.forEach((affected: any) => {
-            if (affected.nodeName !== node.name) {
+        const affectedNodes = data.affectedNodes || data.impact?.affectedNodes || [];
+        if (affectedNodes) {
+          affectedNodes.forEach((affected: any) => {
+            const normalizedAffectedName = String(affected.nodeName || '').trim().toLowerCase();
+            const normalizedSourceName = String(node.name || '').trim().toLowerCase();
+            const isSourceNode =
+              affected.nodeId === node.id ||
+              normalizedAffectedName === normalizedSourceName;
+            if (!isSourceNode) {
               // Try multiple matching strategies
               let nodeMatch = currentGnnNodes.find(n => 
                 n.name === affected.nodeName || 
@@ -408,12 +453,15 @@ export default function Map3D() {
                 // ACCUMULATE IMPACT
                 const currentImpact = nodeMatch.impactScore || 0;
                 const newImpact = affected.probability || affected.severityScore || 50;
-                const totalImpact = Math.min(100, currentImpact + (newImpact * 0.5)); // Add 50% of new impact to existing
+                const shouldForceFail = Boolean(affected.forceFail);
+                const totalImpact = shouldForceFail
+                  ? 100
+                  : Math.min(100, currentImpact + (newImpact * 0.5)); // Add 50% of new impact to existing
                 
                 setNodeImpact(nodeMatch.id, totalImpact, node.id);
                 
-                if (totalImpact > 80) {
-                  setNodeFailed(nodeMatch.id, 'cascade_effect');
+                if (shouldForceFail || totalImpact > 80) {
+                  setNodeFailed(nodeMatch.id, shouldForceFail ? 'guided_cascade' : 'cascade_effect');
                 }
               } else {
                 console.warn(`Could not find matching node for: ${affected.nodeName}`);
@@ -455,48 +503,16 @@ export default function Map3D() {
         throw new Error(data.error || 'Prediction failed');
       }
     } catch (err) {
-      // Fallback: local simulation
-      console.warn('GNN API offline, using local simulation:', err);
-      
-      // Mark the primary failed node
-      setNodeFailed(node.id, failureType);
-      
-      // Find connected nodes and mark them as impacted
-      const gnnEdges = useVillageStore.getState().gnnEdges;
-      const currentGnnNodes = useVillageStore.getState().gnnNodes;
-      
-      const connectedNodes = gnnEdges
-        .filter(e => e.source === node.id || e.target === node.id)
-        .map(e => e.source === node.id ? e.target : e.source);
-      
-      connectedNodes.forEach((nodeId, idx) => {
-        const existingNode = currentGnnNodes.find(n => n.id === nodeId);
-        if (existingNode) {
-             // ACCUMULATE IMPACT LOGIC
-             // "1 node is damaged 10 percent then by another failure it is damaged 6 percent"
-             const currentImpact = existingNode.impactScore || 0;
-             const additionalImpact = Math.max(5, 20 - (idx * 5)); // Add 5-20% damage
-             const totalImpact = Math.min(100, currentImpact + additionalImpact);
-             
-             console.log(`Accumulating Impact for ${existingNode.name}: ${currentImpact}% + ${additionalImpact}% = ${totalImpact}%`);
-             
-             setNodeImpact(nodeId, totalImpact, node.id);
-             
-             if (totalImpact > 90) {
-               setNodeFailed(nodeId, 'cascade_effect');
-             }
-        }
-      });
-      
+      console.error('GNN model inference failed:', err);
+
       setSelectedAsset({ 
         type: 'gnnNode', 
         data: { 
           ...node, 
-          isFailed: true, 
+          isFailed: false,
           failureType,
           severity,
-          localSimulation: true,
-          affectedCount: connectedNodes.length + 1
+          modelInferenceError: err instanceof Error ? err.message : 'Unknown model inference error',
         } 
       });
     } finally {
@@ -1104,21 +1120,20 @@ export default function Map3D() {
         tooltip.style.visibility = 'hidden';
       });
 
-      // Click handler - show failure popup or info panel
+      // Click handler - always allow opening failure popup so users can
+      // re-trigger/cascade failures even for impacted nodes.
       badge.onclick = (e: MouseEvent) => {
         if (isFailed || hasImpact) {
-          // If already failed/impacted, show info panel
           setSelectedAsset({ 
             type: 'gnnNode', 
             data: { ...node, isFailed, hasImpact } 
           });
-        } else {
-          // Show failure popup for healthy nodes
-          setFailurePopup({
-            node,
-            position: { x: e.clientX, y: e.clientY }
-          });
         }
+
+        setFailurePopup({
+          node,
+          position: { x: e.clientX, y: e.clientY }
+        });
       };
 
       const marker = new maplibregl.Marker({ 

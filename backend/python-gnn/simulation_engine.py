@@ -272,7 +272,7 @@ class SimulationEngine:
         
         # Step 2: Counterfactual - force target nodes to fail
         x_sim = x.copy()
-        status_col = 12  # Status feature index
+        status_col = 15  # Status feature index in [12 one-hot | 12 operational]
         
         for node_idx in failed_nodes:
             x_sim[node_idx, status_col] = 0.0  # Force failure
@@ -347,6 +347,92 @@ class SimulationEngine:
                 "simulated": sim_probs.tolist(),
                 "deltas": deltas.tolist()
             }
+        }
+
+    def run_cumulative_simulation(
+        self,
+        x: np.ndarray,
+        edge_index: np.ndarray,
+        edge_weight: np.ndarray,
+        failure_sequence: List[int],
+        node_names: Optional[List[str]] = None,
+        failure_mode: FailureMode = FailureMode.NONE,
+        pessimistic_mode: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Run stepwise cumulative failures.
+
+        Example:
+        - Step 1: fail node A
+        - Step 2: fail node A + B
+        - Step 3: fail node A + B + C
+
+        Returns each step with:
+        - cumulative delta vs healthy baseline
+        - incremental delta vs previous step
+        """
+        num_nodes = x.shape[0]
+        if node_names is None:
+            node_names = [f"Node_{i}" for i in range(num_nodes)]
+
+        baseline_probs, _, _ = self.predictor.predict_with_threshold(x, edge_index, edge_weight)
+        baseline_probs = baseline_probs[:, 0]
+
+        cumulative_failed = []
+        prev_probs = baseline_probs.copy()
+        steps = []
+
+        for step_idx, node_idx in enumerate(failure_sequence, start=1):
+            if node_idx < 0 or node_idx >= num_nodes:
+                raise ValueError(f"Invalid node index in sequence: {node_idx}")
+
+            if node_idx not in cumulative_failed:
+                cumulative_failed.append(node_idx)
+
+            step_result = self.run_simulation(
+                x=x,
+                edge_index=edge_index,
+                edge_weight=edge_weight,
+                failed_nodes=cumulative_failed,
+                node_names=node_names,
+                failure_mode=failure_mode,
+                pessimistic_mode=pessimistic_mode,
+            )
+
+            current_probs = np.array(step_result["raw"]["simulated"], dtype=np.float32)
+            incremental_deltas = current_probs - prev_probs
+            prev_probs = current_probs
+
+            enriched_nodes = []
+            for node_row in step_result["nodes"]:
+                node_copy = dict(node_row)
+                node_copy["incremental_delta"] = float(incremental_deltas[node_copy["node_id"]])
+                enriched_nodes.append(node_copy)
+
+            steps.append(
+                {
+                    "step": step_idx,
+                    "new_failed_node": int(node_idx),
+                    "new_failed_name": node_names[node_idx],
+                    "cumulative_failed_nodes": list(cumulative_failed),
+                    "cumulative_failed_names": [node_names[i] for i in cumulative_failed],
+                    "summary": step_result["summary"],
+                    "nodes": enriched_nodes,
+                    "raw": {
+                        "simulated": current_probs.tolist(),
+                        "delta_from_baseline": step_result["raw"]["deltas"],
+                        "incremental_delta_from_previous_step": incremental_deltas.tolist(),
+                    },
+                }
+            )
+
+        return {
+            "baseline": baseline_probs.tolist(),
+            "failure_sequence": list(failure_sequence),
+            "steps": steps,
+            "final_failed_nodes": list(cumulative_failed),
+            "final_failed_names": [node_names[i] for i in cumulative_failed],
+            "total_steps": len(steps),
         }
     
     def _interpret_delta(

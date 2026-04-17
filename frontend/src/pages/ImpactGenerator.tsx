@@ -15,9 +15,10 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useVillageStore, type GNNInfraNode } from '../store/villageStore';
+import { API_URL } from '../config/api';
 
-// API base URL for GNN wrapper
-const GNN_API_URL = 'http://localhost:7876';
+// API base URL for backend GNN routes
+const GNN_API_URL = API_URL;
 
 // Village center coordinates (Pune)
 const VILLAGE_CENTER: [number, number] = [73.8567, 18.5204];
@@ -89,8 +90,7 @@ export const ImpactGenerator: React.FC = () => {
     try {
       const response = await fetch(`${GNN_API_URL}/api/gnn/status`);
       if (response.ok) {
-        const data = await response.json();
-        setApiStatus(data.status === 'online' ? 'online' : 'offline');
+        setApiStatus('online');
       } else {
         setApiStatus('offline');
       }

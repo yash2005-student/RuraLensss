@@ -19,10 +19,13 @@ MODEL_DIR = SCRIPT_DIR / "models"
 
 # Load model (use production fine-tuned model if available)
 print("Loading GNN model...")
+cv_best_model = MODEL_DIR / "gnn_model.pt"
 production_model = MODEL_DIR / "gnn_production_v1.pt"
 base_model = MODEL_DIR / "gnn_model.pt"
 
-if production_model.exists():
+if cv_best_model.exists():
+    model_path = str(cv_best_model)
+elif production_model.exists():
     model_path = str(production_model)
 elif base_model.exists():
     model_path = str(base_model)
@@ -30,15 +33,14 @@ else:
     raise FileNotFoundError(f"No model found in {MODEL_DIR}")
 
 print(f"Using model: {model_path}")
-# Initialize with temperature=0.5 (crisis mode) and status_veto_weight=1.5
+# Initialize with temperature=0.5 (crisis mode)
 predictor = ImpactPredictor(
     model_path=model_path, 
-    temperature=0.5,  # Sharper predictions
-    status_veto_weight=1.5  # Status veto enabled
+    temperature=0.5,
 )
 print("✓ Model loaded successfully")
 print("  🌡️ Temperature: 0.5 (crisis mode)")
-print("  ⚙️ Status veto: 1.5 (architecture enhanced)\n")
+print("  🧠 Architecture: GCN + GAT + residuals\n")
 
 # Initialize simulation engine
 simulation_engine = SimulationEngine(predictor)
@@ -57,6 +59,14 @@ OUTPUT_LABELS = [
     "Power Impact", "Road Impact", "Building Impact", "Population Affected",
     "Economic Loss", "Recovery Time", "Priority", "Confidence"
 ]
+
+FAILURE_MODE_MAP = {
+    "None (Raw Physics)": FailureMode.NONE,
+    "Demand Loss (Consumer Failure)": FailureMode.DEMAND_LOSS,
+    "Supply Cut (Source Failure)": FailureMode.SUPPLY_CUT,
+    "Contamination (Quality Issue)": FailureMode.CONTAMINATION,
+    "Control Failure (Sensor/Valve)": FailureMode.CONTROL_FAILURE,
+}
 
 
 def create_node_features(node_type, capacity, level, flow, status, criticality, 
@@ -274,6 +284,25 @@ def load_preset_scenario(scenario_name):
     return scenarios.get(scenario_name, scenarios["Tank Failure → Hospital"])
 
 
+def build_default_simulation_graph():
+    """Reference network used by the simulator tabs."""
+    x = np.array([
+        # Tank (source) - healthy
+        [0,0,0,1,0,0,0,0,0,0,0,0, 0.9, 0.8, 0.7, 0.9, 0.8, 0.6, 0.7, 0.8, 0.9, 0.1, 0.1, 0.0],
+        # Pump - healthy
+        [0,0,0,0,1,0,0,0,0,0,0,0, 0.9, 0.7, 0.8, 0.8, 0.6, 0.4, 0.5, 0.7, 0.8, 0.1, 0.1, 0.0],
+        # Pipe - healthy
+        [0,0,0,0,0,1,0,0,0,0,0,0, 0.9, 0.6, 0.7, 0.7, 0.4, 0.3, 0.4, 0.5, 0.6, 0.1, 0.1, 0.0],
+        # Hospital (critical consumer) - healthy
+        [0,0,0,0,0,0,1,0,0,0,0,0, 0.9, 0.9, 0.5, 0.95, 0.9, 0.8, 0.9, 0.9, 0.95, 0.1, 0.1, 0.0],
+    ], dtype=np.float32)
+
+    edge_index = np.array([[0,1,2,1,2,3], [1,2,3,0,1,2]], dtype=np.int64)
+    edge_weight = np.array([0.9, 0.85, 0.8, 0.9, 0.85, 0.8], dtype=np.float32)
+    node_names = ["Tank_Main", "Pump_Station", "Pipe_A", "Hospital"]
+    return x, edge_index, edge_weight, node_names
+
+
 def run_simulation(
     failed_node_idx: int,
     failure_mode_str: str,
@@ -285,31 +314,8 @@ def run_simulation(
     This is the "What-If" simulator that shows causal impact propagation.
     """
     try:
-        # Create test graph: Tank → Pump → Pipe → Hospital (all healthy baseline)
-        x = np.array([
-            # Tank (source) - healthy
-            [0,0,0,1,0,0,0,0,0,0,0,0, 0.9, 0.8, 0.7, 0.9, 0.8, 0.6, 0.7, 0.8, 0.9, 0.1, 0.1, 0.0],
-            # Pump - healthy
-            [0,0,0,0,1,0,0,0,0,0,0,0, 0.9, 0.7, 0.8, 0.8, 0.6, 0.4, 0.5, 0.7, 0.8, 0.1, 0.1, 0.0],
-            # Pipe - healthy
-            [0,0,0,0,0,1,0,0,0,0,0,0, 0.9, 0.6, 0.7, 0.7, 0.4, 0.3, 0.4, 0.5, 0.6, 0.1, 0.1, 0.0],
-            # Hospital (critical consumer) - healthy
-            [0,0,0,0,0,0,1,0,0,0,0,0, 0.9, 0.9, 0.5, 0.95, 0.9, 0.8, 0.9, 0.9, 0.95, 0.1, 0.1, 0.0],
-        ], dtype=np.float32)
-        
-        edge_index = np.array([[0,1,2,1,2,3], [1,2,3,0,1,2]], dtype=np.int64)
-        edge_weight = np.array([0.9, 0.85, 0.8, 0.9, 0.85, 0.8], dtype=np.float32)
-        node_names = ["Tank_Main", "Pump_Station", "Pipe_A", "Hospital"]
-        
-        # Map failure mode string to enum
-        failure_mode_map = {
-            "None (Raw Physics)": FailureMode.NONE,
-            "Demand Loss (Consumer Failure)": FailureMode.DEMAND_LOSS,
-            "Supply Cut (Source Failure)": FailureMode.SUPPLY_CUT,
-            "Contamination (Quality Issue)": FailureMode.CONTAMINATION,
-            "Control Failure (Sensor/Valve)": FailureMode.CONTROL_FAILURE
-        }
-        failure_mode = failure_mode_map.get(failure_mode_str, FailureMode.NONE)
+        x, edge_index, edge_weight, node_names = build_default_simulation_graph()
+        failure_mode = FAILURE_MODE_MAP.get(failure_mode_str, FailureMode.NONE)
         
         # Run simulation
         result = simulation_engine.run_simulation(
@@ -399,6 +405,202 @@ def run_simulation(
         
         return output, guide
         
+    except Exception as e:
+        return f"❌ Error: {str(e)}", ""
+
+
+def run_cumulative_sequence(
+    failure_sequence: str,
+    failure_mode_str: str,
+    pessimistic_mode: bool,
+):
+    """Run stepwise cumulative failures where each new failure stacks on prior ones."""
+    try:
+        if not failure_sequence.strip():
+            return "❌ Enter a comma-separated failure sequence, e.g. 0,2,1", ""
+
+        seq = []
+        for token in failure_sequence.split(","):
+            token = token.strip()
+            if token:
+                seq.append(int(token))
+
+        if not seq:
+            return "❌ No valid node indices found in sequence.", ""
+
+        x, edge_index, edge_weight, node_names = build_default_simulation_graph()
+        failure_mode = FAILURE_MODE_MAP.get(failure_mode_str, FailureMode.NONE)
+
+        result = simulation_engine.run_cumulative_simulation(
+            x=x,
+            edge_index=edge_index,
+            edge_weight=edge_weight,
+            failure_sequence=seq,
+            node_names=node_names,
+            failure_mode=failure_mode,
+            pessimistic_mode=pessimistic_mode,
+        )
+
+        output = f"{'='*70}\n"
+        output += "🔁 CUMULATIVE FAILURE SIMULATION\n"
+        output += f"{'='*70}\n"
+        output += f"Sequence: {seq}\n"
+        output += f"Final failed nodes: {result['final_failed_names']}\n"
+        output += f"Failure mode: {failure_mode_str}\n"
+        output += f"Pessimistic mode: {pessimistic_mode}\n\n"
+
+        for step in result["steps"]:
+            output += f"Step {step['step']}: Fail {step['new_failed_name']}\n"
+            output += f"  Active failed set: {step['cumulative_failed_names']}\n"
+            output += f"  Affected nodes: {step['summary']['affected_count']}\n"
+            output += f"  Max cumulative |Δ|: {step['summary']['max_delta']:.4f}\n"
+            output += "  Node deltas (cumulative vs healthy | incremental vs previous step):\n"
+
+            for row in step["nodes"]:
+                if row["is_failed_source"]:
+                    output += f"    ⚫ {row['node_name']:<14} SOURCE\n"
+                    continue
+
+                cum_delta = row["delta"]
+                inc_delta = row["incremental_delta"]
+                output += (
+                    f"    • {row['node_name']:<14} "
+                    f"cum Δ={cum_delta:+.4f} | step Δ={inc_delta:+.4f}\n"
+                )
+
+            output += "\n"
+
+        guide = f"{'='*70}\n"
+        guide += "How to read cumulative simulation\n"
+        guide += f"{'='*70}\n"
+        guide += "- cum Δ: impact difference against healthy baseline.\n"
+        guide += "- step Δ: additional change introduced by the new failed node at that step.\n"
+        guide += "- This lets you see node-after-node stacked cascade effects clearly.\n"
+
+        return output, guide
+
+    except Exception as e:
+        return f"❌ Error: {str(e)}", ""
+
+
+def run_inference_with_added_node(
+    new_type: str,
+    new_capacity: float,
+    new_level: float,
+    new_flow: float,
+    new_status: float,
+    new_criticality: float,
+    new_population: float,
+    new_economic: float,
+    new_connectivity: float,
+    new_maintenance: float,
+    existing_to_new: str,
+    new_to_existing: str,
+    default_edge_weight: float,
+    threshold: float,
+):
+    """
+    Add one new node to the default graph and run inference on the expanded graph.
+
+    Edge input format:
+    - existing_to_new: "0:0.9,2:0.8" or "0,2" (uses default weight)
+    - new_to_existing: "3:0.7" or "3"
+    """
+    try:
+        x, edge_index, edge_weight, node_names = build_default_simulation_graph()
+        base_count = x.shape[0]
+        new_node_idx = base_count
+
+        new_node = create_node_features(
+            new_type,
+            new_capacity,
+            new_level,
+            new_flow,
+            new_status,
+            new_criticality,
+            new_population,
+            new_economic,
+            new_connectivity,
+            new_maintenance,
+        )
+
+        x_new = np.vstack([x, np.array(new_node, dtype=np.float32)])
+        expanded_names = node_names + [f"{new_type}_New"]
+
+        edge_pairs = [(int(edge_index[0, i]), int(edge_index[1, i])) for i in range(edge_index.shape[1])]
+        edge_weights = [float(edge_weight[i]) for i in range(edge_weight.shape[0])]
+
+        def parse_edges(spec: str, src_is_new: bool):
+            if not spec.strip():
+                return
+
+            for token in spec.split(","):
+                token = token.strip()
+                if not token:
+                    continue
+
+                if ":" in token:
+                    idx_str, weight_str = token.split(":", 1)
+                    other_idx = int(idx_str.strip())
+                    w = float(weight_str.strip())
+                else:
+                    other_idx = int(token)
+                    w = float(default_edge_weight)
+
+                if other_idx < 0 or other_idx >= base_count:
+                    raise ValueError(
+                        f"Invalid node index {other_idx}. Existing graph indices are 0 to {base_count - 1}."
+                    )
+
+                w = max(0.0, min(1.0, w))
+                if src_is_new:
+                    edge_pairs.append((new_node_idx, other_idx))
+                else:
+                    edge_pairs.append((other_idx, new_node_idx))
+                edge_weights.append(w)
+
+        parse_edges(existing_to_new, src_is_new=False)
+        parse_edges(new_to_existing, src_is_new=True)
+
+        if len(edge_pairs) == edge_index.shape[1]:
+            return (
+                "❌ Add at least one edge connecting the new node. Use existing->new or new->existing.",
+                "",
+            )
+
+        edge_index_new = np.array(edge_pairs, dtype=np.int64).T
+        edge_weight_new = np.array(edge_weights, dtype=np.float32)
+
+        base_probs, _, _ = predictor.predict_with_threshold(x, edge_index, edge_weight, threshold=threshold)
+        probs, alerts, risk_level = predictor.predict_with_threshold(
+            x_new, edge_index_new, edge_weight_new, threshold=threshold
+        )
+
+        out = "➕ NODE ADDITION INFERENCE\n" + "=" * 72 + "\n"
+        out += f"New node index: {new_node_idx} ({expanded_names[new_node_idx]})\n"
+        out += f"Risk level: {risk_level} | Alert threshold: {threshold:.2f}\n"
+        out += f"Total nodes: {x_new.shape[0]} | Total edges: {edge_index_new.shape[1]}\n\n"
+
+        out += "Per-node impact probability after expansion\n"
+        out += "-" * 72 + "\n"
+        for i, name in enumerate(expanded_names):
+            p = probs[i, 0]
+            alert_flag = "ALERT" if alerts[i, 0] else "OK"
+            marker = "(NEW)" if i == new_node_idx else ""
+            out += f"{i}: {name:<16} {p*100:6.2f}% {alert_flag:>6} {marker}\n"
+
+        out += "\nImpact shift on original nodes due to node addition\n"
+        out += "-" * 72 + "\n"
+        for i, name in enumerate(node_names):
+            delta = float(probs[i, 0] - base_probs[i, 0])
+            out += f"{i}: {name:<16} Δ={delta:+.4f}\n"
+
+        graph_text = "Expanded graph edges\n" + "-" * 72 + "\n"
+        for idx, (src, dst) in enumerate(edge_pairs):
+            graph_text += f"{src} ({expanded_names[src]}) -> {dst} ({expanded_names[dst]}), w={edge_weights[idx]:.2f}\n"
+
+        return out, graph_text
+
     except Exception as e:
         return f"❌ Error: {str(e)}", ""
 
@@ -634,6 +836,31 @@ with gr.Blocks(title="GNN Infrastructure Impact Predictor", theme=gr.themes.Soft
                         label="Interpretation Guide",
                         lines=15
                     )
+
+            with gr.Row():
+                with gr.Column(scale=1):
+                    gr.Markdown("### 🔁 Cumulative Failure Sequence")
+                    cumulative_sequence = gr.Textbox(
+                        value="0,2",
+                        label="Failure Sequence",
+                        info="Comma-separated node indices. Example: 0,2,1"
+                    )
+                    cumulative_btn = gr.Button(
+                        "🔁 Run Cumulative Sequence",
+                        variant="secondary",
+                        size="lg"
+                    )
+
+                with gr.Column(scale=2):
+                    cumulative_output = gr.Textbox(
+                        label="Cumulative Simulation Results",
+                        lines=20,
+                        max_lines=30,
+                    )
+                    cumulative_guide = gr.Textbox(
+                        label="Cumulative Interpretation Guide",
+                        lines=8,
+                    )
             
             gr.Markdown("""
             ---
@@ -661,6 +888,70 @@ with gr.Blocks(title="GNN Infrastructure Impact Predictor", theme=gr.themes.Soft
                 fn=run_simulation,
                 inputs=[sim_failed_node, sim_failure_mode, sim_pessimistic],
                 outputs=[sim_output, sim_guide]
+            )
+
+            cumulative_btn.click(
+                fn=run_cumulative_sequence,
+                inputs=[cumulative_sequence, sim_failure_mode, sim_pessimistic],
+                outputs=[cumulative_output, cumulative_guide],
+            )
+
+            gr.Markdown("---")
+            gr.Markdown("## ➕ Add New Node To Existing Graph And Run Inference")
+            gr.Markdown(
+                "Add one node to the current default graph and immediately infer updated impacts. "
+                "Use indices 0-3 for existing nodes. Edge format examples: `2:0.8,3:0.7` or `2,3`."
+            )
+
+            with gr.Row():
+                with gr.Column(scale=1):
+                    add_type = gr.Dropdown(choices=list(NODE_TYPES.keys()), value="Sensor", label="New Node Type")
+                    add_status = gr.Slider(0, 1, value=0.9, label="Status")
+                    add_capacity = gr.Slider(0, 1, value=0.5, label="Capacity")
+                    add_level = gr.Slider(0, 1, value=0.5, label="Current Level")
+                    add_flow = gr.Slider(0, 1, value=0.5, label="Flow Rate")
+                    add_criticality = gr.Slider(0, 1, value=0.4, label="Criticality")
+                    add_population = gr.Slider(0, 1, value=0.2, label="Population Served")
+                    add_economic = gr.Slider(0, 1, value=0.2, label="Economic Value")
+                    add_connectivity = gr.Slider(0, 1, value=0.5, label="Connectivity")
+                    add_maintenance = gr.Slider(0, 1, value=0.7, label="Maintenance Score")
+                    add_existing_to_new = gr.Textbox(
+                        value="2:0.8",
+                        label="Existing -> New Edges",
+                        info="Comma-separated indices with optional weights, e.g. 1:0.9,2:0.8",
+                    )
+                    add_new_to_existing = gr.Textbox(
+                        value="2:0.8",
+                        label="New -> Existing Edges",
+                        info="Comma-separated indices with optional weights, e.g. 3:0.7",
+                    )
+                    add_default_w = gr.Slider(0.1, 1.0, value=0.8, step=0.05, label="Default Edge Weight")
+                    add_threshold = gr.Slider(0.1, 0.9, value=0.5, step=0.05, label="Alert Threshold")
+                    add_node_btn = gr.Button("➕ Add Node And Infer", variant="primary", size="lg")
+
+                with gr.Column(scale=2):
+                    add_node_output = gr.Textbox(label="Expanded Graph Inference", lines=20, max_lines=30)
+                    add_node_graph = gr.Textbox(label="Expanded Graph Structure", lines=16, max_lines=24)
+
+            add_node_btn.click(
+                fn=run_inference_with_added_node,
+                inputs=[
+                    add_type,
+                    add_capacity,
+                    add_level,
+                    add_flow,
+                    add_status,
+                    add_criticality,
+                    add_population,
+                    add_economic,
+                    add_connectivity,
+                    add_maintenance,
+                    add_existing_to_new,
+                    add_new_to_existing,
+                    add_default_w,
+                    add_threshold,
+                ],
+                outputs=[add_node_output, add_node_graph],
             )
     
     gr.Markdown("""

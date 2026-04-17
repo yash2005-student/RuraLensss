@@ -44,6 +44,7 @@ class PredictionRequest(BaseModel):
     nodes: List[NodeFeature]
     edges: List[Edge]
     failure_node_id: Optional[str] = None
+    failure_severity: Optional[str] = "medium"
 
 
 class ImpactPrediction(BaseModel):
@@ -139,6 +140,30 @@ async def predict_impact(request: PredictionRequest):
                 status_code=400, 
                 detail=f"Expected 24 features per node, got {node_features.shape[1]}"
             )
+
+        # Apply failure condition if provided.
+        # Feature layout in this repo: status is index 15.
+        if request.failure_node_id:
+            node_ids = [node.id for node in request.nodes]
+            if request.failure_node_id in node_ids:
+                failed_idx = node_ids.index(request.failure_node_id)
+                severity_map = {
+                    "low": 0.3,
+                    "medium": 0.6,
+                    "high": 0.85,
+                    "critical": 1.0,
+                }
+                severity = severity_map.get(str(request.failure_severity or "medium").lower(), 0.6)
+
+                # Force failed node status toward failure.
+                node_features[failed_idx, 15] = 0.0
+
+                # Reduce current level and flow for stronger failure context.
+                node_features[failed_idx, 13] = node_features[failed_idx, 13] * (1.0 - severity)
+                node_features[failed_idx, 14] = node_features[failed_idx, 14] * (1.0 - severity)
+
+                # Increase failure-history signal slightly (index 22 in this project docs/code path).
+                node_features[failed_idx, 22] = min(1.0, node_features[failed_idx, 22] + 0.25 * severity)
         
         # Build edge index
         edge_list = [[edge.source, edge.target] for edge in request.edges]
