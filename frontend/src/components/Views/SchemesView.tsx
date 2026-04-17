@@ -223,7 +223,7 @@ export default function SchemesView() {
         <div className="mb-6 md:mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Briefcase size={20} className="md:hidden text-white" />
                 <Briefcase size={24} className="hidden md:block text-white" />
               </div>
@@ -245,10 +245,10 @@ export default function SchemesView() {
               {userRole === 'admin' && (
                 <button
                   onClick={() => setShowAddSchemeModal(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md flex items-center justify-center space-x-2"
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-cyan-700 transition-all shadow-md flex items-center justify-center space-x-2"
                 >
-                  <Plus size={20} />
-                  <span>Add New Scheme</span>
+                  <Plus size={20} className="text-white" />
+                  <span className="text-white">Add New Scheme</span>
                 </button>
               )}
             </div>
@@ -904,19 +904,19 @@ function SchemeDetailsModal({
             <div className="space-y-6">
               {/* Discrepancies */}
               {scheme.discrepancies.length > 0 && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <div className="flex items-center space-x-2 mb-3">
-                    <AlertTriangle className="text-red-400" size={20} />
-                    <h3 className="font-bold text-red-200">Critical Issues Requiring Attention</h3>
+                    <AlertTriangle className="text-red-600" size={20} />
+                    <h3 className="font-bold text-red-800">Critical Issues Requiring Attention</h3>
                   </div>
                   <ul className="space-y-3">
                     {scheme.discrepancies.map((disc, idx) => (
-                      <li key={idx} className="bg-red-500/5 rounded-lg p-3 border border-red-500/10">
+                      <li key={idx} className="bg-white rounded-lg p-3 border border-red-200">
                         <div className="flex items-start space-x-2">
-                          <span className="text-red-400 mt-1">⚠️</span>
+                          <span className="text-red-600 mt-1">⚠️</span>
                           <div className="flex-1">
-                            <div className="text-sm text-red-200 leading-relaxed">{disc.description}</div>
-                            <div className="flex items-center gap-3 mt-2 text-xs text-red-300/70">
+                            <div className="text-sm text-red-800 leading-relaxed">{disc.description}</div>
+                            <div className="flex items-center gap-3 mt-2 text-xs text-red-700">
                               <span>Reported by: {disc.reportedBy || 'Citizens (Anonymized)'}</span>
                               <span>•</span>
                               <span>{new Date(disc.reportedDate || disc.date || Date.now()).toLocaleDateString()}</span>
@@ -962,23 +962,23 @@ function SchemeDetailsModal({
 
               {/* Budget Breakdown */}
               <div>
-                <h3 className="font-bold text-white mb-3">Budget Breakdown</h3>
+                <h3 className="font-bold text-slate-900 mb-3">Budget Breakdown</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                    <div className="text-sm text-blue-300 mb-1">Total Allocated</div>
-                    <div className="text-2xl font-bold text-blue-100">₹{(scheme.totalBudget / 100000).toFixed(2)}L</div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="text-sm text-blue-700 mb-1">Total Allocated</div>
+                    <div className="text-2xl font-bold text-blue-900">₹{(scheme.totalBudget / 100000).toFixed(2)}L</div>
                   </div>
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
-                    <div className="text-sm text-emerald-300 mb-1">Total Utilized</div>
-                    <div className="text-2xl font-bold text-emerald-100">₹{(scheme.budgetUtilized / 100000).toFixed(2)}L</div>
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                    <div className="text-sm text-emerald-700 mb-1">Total Utilized</div>
+                    <div className="text-2xl font-bold text-emerald-900">₹{(scheme.budgetUtilized / 100000).toFixed(2)}L</div>
                   </div>
-                  <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
-                    <div className="text-sm text-purple-300 mb-1">Remaining</div>
-                    <div className="text-2xl font-bold text-purple-100">₹{((scheme.totalBudget - scheme.budgetUtilized) / 100000).toFixed(2)}L</div>
+                  <div className="bg-violet-50 border border-violet-200 rounded-lg p-4">
+                    <div className="text-sm text-violet-700 mb-1">Remaining</div>
+                    <div className="text-2xl font-bold text-violet-900">₹{((scheme.totalBudget - scheme.budgetUtilized) / 100000).toFixed(2)}L</div>
                   </div>
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
-                    <div className="text-sm text-amber-300 mb-1">Utilization Rate</div>
-                    <div className="text-2xl font-bold text-amber-100">{Math.round((scheme.budgetUtilized / scheme.totalBudget) * 100)}%</div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="text-sm text-amber-700 mb-1">Utilization Rate</div>
+                    <div className="text-2xl font-bold text-amber-900">{Math.round((scheme.budgetUtilized / scheme.totalBudget) * 100)}%</div>
                   </div>
                 </div>
               </div>
