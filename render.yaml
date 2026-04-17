@@ -13,13 +13,20 @@ services:
         value: production
       - key: PORT
         value: 10000
-      # Set MONGODB_URI in the Render dashboard (do not commit secrets here)
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: HUGGINGFACE_API_KEY
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
+      - key: ADMIN_EMAIL
+        value: admin@village.com
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        value: Administrator
 
   # ─── Frontend Static Site (React/Vite) ──────────────────────────────────────
   - type: web
