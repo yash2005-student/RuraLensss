@@ -16,6 +16,7 @@ import FieldWorkerView from './components/Views/FieldWorkerView';
 import MapView from './components/Views/MapView';
 import SchemesView from './components/Views/SchemesView';
 import AqiWeatherView from './components/Views/AqiWeatherView';
+import CallRecordsView from './components/Views/CallRecordsView';
 import ImpactPredictorView from './components/Views/ImpactPredictorView';
 import MobileNav from './components/Layout/MobileNav';
 import MobileHeader from './components/Layout/MobileHeader';
@@ -93,6 +94,8 @@ function App() {
       case 'reports':
       case 'anonymous-reports':
         return isMobile ? <MobileAnonymousReports /> : <AnonymousReportsView />;
+      case 'call-records':
+        return userRole === 'admin' ? <CallRecordsView /> : (isMobile ? <MobileDashboard /> : <Dashboard />);
       case 'impact-predictor':
         return <ImpactPredictorView />;
       case 'settings':

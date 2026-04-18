@@ -6,7 +6,8 @@ import {
   Map,
   Briefcase,
   Shield,
-  CloudSun
+  CloudSun,
+  Phone
 } from 'lucide-react';
 import { useVillageStore } from '../../store/villageStore';
 import { useLanguage } from '../../i18n/LanguageContext';
@@ -17,6 +18,7 @@ const menuItems = [
   { id: 'schemes', icon: Briefcase, labelKey: 'govSchemes', label: 'Government Schemes' },
   { id: 'aqi-weather', icon: CloudSun, labelKey: 'aqiWeather', label: 'AQI & Weather' },
   { id: 'anonymous-reports', icon: Shield, labelKey: 'citizenReports', label: 'Citizen Reports' },
+  { id: 'call-records', icon: Phone, labelKey: 'citizenCallRecords', label: 'Citizen Call Records' },
   { id: 'settings', icon: Settings, labelKey: 'settings', label: 'Settings' },
 ];
 
