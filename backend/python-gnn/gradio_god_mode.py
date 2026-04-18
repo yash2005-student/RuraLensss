@@ -1,5 +1,5 @@
 """
-🏘️ VILLAGE INFRASTRUCTURE IMPACT PREDICTOR - GNN POWERED
+??? VILLAGE INFRASTRUCTURE IMPACT PREDICTOR - GNN POWERED
 
 Predicts cascading effects across roads, buildings, power, and water systems.
 Matches the React website's Impact Prediction Panel design.
@@ -27,15 +27,15 @@ from collections import deque
 SCRIPT_DIR = Path(__file__).parent
 MODEL_DIR = SCRIPT_DIR / "models"
 
-print("🏘️ Village Impact Predictor - Initializing...")
+print("??? Village Impact Predictor - Initializing...")
 model_path = str(MODEL_DIR / "gnn_production_v1.pt") if (MODEL_DIR / "gnn_production_v1.pt").exists() else str(MODEL_DIR / "gnn_model.pt")
 predictor = ImpactPredictor(model_path=model_path, temperature=0.5, status_veto_weight=1.5)
 simulation_engine = SimulationEngine(predictor)
-print("✓ GNN Engine Ready\n")
+print("? GNN Engine Ready\n")
 
 
 # =============================================================================
-# 🎨 DESIGN CONSTANTS (Matching React Website)
+# ?? DESIGN CONSTANTS (Matching React Website)
 # =============================================================================
 
 # Severity color scheme (from ImpactPredictionPanel.tsx)
@@ -78,22 +78,22 @@ NODE_TYPE_LABELS = {
 
 # Node type emojis
 NODE_EMOJIS = {
-    "Tank": "💧",
-    "Pump": "⚙️",
-    "Cluster": "👥",
-    "Pipe": "🔗",
-    "Power": "⚡",
-    "Sensor": "📡",
-    "Road": "🛣️",
-    "Building": "🏢",
-    "School": "🎓",
-    "Hospital": "🏥",
-    "Market": "🛒",
+    "Tank": "??",
+    "Pump": "??",
+    "Cluster": "??",
+    "Pipe": "??",
+    "Power": "?",
+    "Sensor": "??",
+    "Road": "???",
+    "Building": "??",
+    "School": "??",
+    "Hospital": "??",
+    "Market": "??",
 }
 
 
 # =============================================================================
-# 🚨 IMPACT CALCULATION & AMPLIFICATION
+# ?? IMPACT CALCULATION & AMPLIFICATION
 # =============================================================================
 
 def amplify_risk(delta: float, topology_weight: float) -> float:
@@ -119,7 +119,7 @@ def get_severity_level(score: float) -> str:
 
 
 # =============================================================================
-# 🧠 STRATEGIC INSIGHTS
+# ?? STRATEGIC INSIGHTS
 # =============================================================================
 
 CRISIS_INSIGHTS = {
@@ -216,7 +216,7 @@ SEVERITY_MULTIPLIERS = {
 
 
 # =============================================================================
-# AUTO-FILL: Type + Health → Full 24-dim Features (Hidden from user!)
+# AUTO-FILL: Type + Health ? Full 24-dim Features (Hidden from user!)
 # =============================================================================
 
 def auto_fill_features(node_type: str, health: float) -> List[float]:
@@ -263,21 +263,21 @@ network_state = {
 def add_node(name: str, node_type: str, health: float) -> str:
     """Add a node to the network."""
     if not name.strip():
-        return "❌ Please enter a node name"
+        return "? Please enter a node name"
     
     name = name.strip()
     network_state["nodes"][name] = {"type": node_type, "health": health}
-    return f"✅ Added: **{name}** ({node_type}, {health:.0%} health)"
+    return f"? Added: **{name}** ({node_type}, {health:.0%} health)"
 
 
 def add_edge(from_node: str, to_node: str) -> str:
     """Add a connection between nodes."""
     if from_node not in network_state["nodes"]:
-        return f"❌ Node '{from_node}' doesn't exist"
+        return f"? Node '{from_node}' doesn't exist"
     if to_node not in network_state["nodes"]:
-        return f"❌ Node '{to_node}' doesn't exist"
+        return f"? Node '{to_node}' doesn't exist"
     if from_node == to_node:
-        return "❌ Can't connect node to itself"
+        return "? Can't connect node to itself"
     
     edge = (from_node, to_node)
     if edge not in network_state["edges"]:
@@ -285,14 +285,14 @@ def add_edge(from_node: str, to_node: str) -> str:
         # Add reverse edge for bidirectional
         network_state["edges"].append((to_node, from_node))
     
-    return f"✅ Connected: **{from_node}** ↔ **{to_node}**"
+    return f"? Connected: **{from_node}** ? **{to_node}**"
 
 
 def clear_network() -> str:
     """Clear the entire network."""
     network_state["nodes"] = {}
     network_state["edges"] = []
-    return "🗑️ Network cleared"
+    return "??? Network cleared"
 
 
 def get_network_display() -> str:
@@ -300,18 +300,18 @@ def get_network_display() -> str:
     if not network_state["nodes"]:
         return "*No nodes yet. Add some!*"
     
-    output = "### 📍 Nodes\n"
+    output = "### ?? Nodes\n"
     for name, info in network_state["nodes"].items():
-        health_icon = "🟢" if info["health"] >= 0.7 else "🟡" if info["health"] >= 0.4 else "🔴"
+        health_icon = "??" if info["health"] >= 0.7 else "??" if info["health"] >= 0.4 else "??"
         output += f"- {health_icon} **{name}** ({info['type']}, {info['health']:.0%})\n"
     
-    output += "\n### 🔗 Connections\n"
+    output += "\n### ?? Connections\n"
     seen = set()
     for f, t in network_state["edges"]:
         key = tuple(sorted([f, t]))
         if key not in seen:
             seen.add(key)
-            output += f"- {f} ↔ {t}\n"
+            output += f"- {f} ? {t}\n"
     
     if not seen:
         output += "*No connections yet*\n"
@@ -339,7 +339,7 @@ def load_example_network() -> str:
         ("Main-Pipe", "Hospital"), ("Hospital", "Main-Pipe"),
         ("Main-Pipe", "School"), ("School", "Main-Pipe"),
     ]
-    return "✅ Loaded example: Tank → Pump → Pipe → Hospital/School"
+    return "? Loaded example: Tank ? Pump ? Pipe ? Hospital/School"
 
 
 # =============================================================================
@@ -510,7 +510,7 @@ def render_error(message: str) -> str:
     """Render error message in website style."""
     return f'''
     <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 24px;">⚠️</span>
+        <span style="font-size: 24px;">??</span>
         <span style="color: #f87171;">{message}</span>
     </div>
     '''
@@ -533,14 +533,14 @@ def render_impact_results(
     
     colors = SEVERITY_COLORS[overall_severity]
     source_color = NODE_TYPE_COLORS.get(source_type, "#64748b")
-    source_emoji = NODE_EMOJIS.get(source_type, "🏢")
+    source_emoji = NODE_EMOJIS.get(source_type, "??")
     
     # Build affected nodes cards
     affected_html = ""
     for node in affected_nodes[:10]:  # Limit to top 10
         node_colors = SEVERITY_COLORS[node["severity"]]
         node_color = NODE_TYPE_COLORS.get(node["type"], "#64748b")
-        node_emoji = NODE_EMOJIS.get(node["type"], "🏢")
+        node_emoji = NODE_EMOJIS.get(node["type"], "??")
         
         affected_html += f'''
         <div style="border: 1px solid {node_colors["border"]}; border-radius: 8px; margin-bottom: 8px; overflow: hidden;">
@@ -551,7 +551,7 @@ def render_impact_results(
                     </div>
                     <div>
                         <div style="color: white; font-weight: 600;">{node["name"]}</div>
-                        <div style="color: #94a3b8; font-size: 12px;">{NODE_TYPE_LABELS.get(node["type"], node["type"])} • Impact in ~{node["hops"]}h</div>
+                        <div style="color: #94a3b8; font-size: 12px;">{NODE_TYPE_LABELS.get(node["type"], node["type"])} - Impact in ~{node["hops"]}h</div>
                     </div>
                 </div>
                 <div style="text-align: right;">
@@ -561,7 +561,7 @@ def render_impact_results(
             </div>
             <div style="background: rgba(30, 41, 59, 0.5); padding: 12px; border-top: 1px solid #334155;">
                 <div style="color: #94a3b8; font-size: 12px; margin-bottom: 8px;">Expected Effects</div>
-                <div style="color: #cbd5e1; font-size: 13px; margin-bottom: 12px;">• {node["insight"]}</div>
+                <div style="color: #cbd5e1; font-size: 13px; margin-bottom: 12px;">- {node["insight"]}</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <div style="background: rgba(71, 85, 105, 0.5); border-radius: 6px; padding: 8px;">
                         <div style="color: #94a3b8; font-size: 11px;">Supply Disruption</div>
@@ -589,7 +589,7 @@ def render_impact_results(
     for action in priority_actions:
         actions_html += f'''
             <li style="display: flex; align-items: center; gap: 8px; color: #cbd5e1; font-size: 13px; margin-bottom: 4px;">
-                <span style="color: #22d3ee;">→</span> {action}
+                <span style="color: #22d3ee;">?</span> {action}
             </li>
         '''
     
@@ -598,7 +598,7 @@ def render_impact_results(
         <!-- Overall Assessment -->
         <div style="background: {colors["bg"]}; border: 1px solid {colors["border"]}; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
             <div style="display: flex; align-items: flex-start; gap: 12px;">
-                <span style="font-size: 24px;">⚠️</span>
+                <span style="font-size: 24px;">??</span>
                 <div style="flex: 1;">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                         <h3 style="color: white; font-size: 18px; font-weight: 700; margin: 0;">Impact Assessment</h3>
@@ -642,7 +642,7 @@ def render_impact_results(
                     
                     <!-- Recovery Time -->
                     <div style="display: flex; align-items: center; gap: 8px; color: #94a3b8; font-size: 13px;">
-                        <span>🕐</span> Estimated Recovery: {recovery}
+                        <span>??</span> Estimated Recovery: {recovery}
                     </div>
                 </div>
             </div>
@@ -651,7 +651,7 @@ def render_impact_results(
         <!-- Failure Source -->
         <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
             <h3 style="color: white; font-size: 16px; font-weight: 600; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
-                <span style="color: #f87171;">✕</span> Failure Source
+                <span style="color: #f87171;">?</span> Failure Source
             </h3>
             <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 12px;">
                 <div style="background: {source_color}; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
@@ -659,7 +659,7 @@ def render_impact_results(
                 </div>
                 <div>
                     <div style="color: white; font-weight: 600;">{source_node}</div>
-                    <div style="color: #94a3b8; font-size: 13px;">{NODE_TYPE_LABELS.get(source_type, source_type)} • {failure_type} ({severity})</div>
+                    <div style="color: #94a3b8; font-size: 13px;">{NODE_TYPE_LABELS.get(source_type, source_type)} - {failure_type} ({severity})</div>
                 </div>
             </div>
         </div>
@@ -667,7 +667,7 @@ def render_impact_results(
         <!-- Cascading Effects -->
         <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 12px; padding: 16px;">
             <h3 style="color: white; font-size: 16px; font-weight: 600; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
-                <span style="color: #fb923c;">⚠️</span> Cascading Effects ({len(affected_nodes)} nodes)
+                <span style="color: #fb923c;">??</span> Cascading Effects ({len(affected_nodes)} nodes)
             </h3>
             <div style="max-height: 400px; overflow-y: auto;">
                 {affected_html if affected_html else '<div style="color: #94a3b8; text-align: center; padding: 20px;">No significant cascading effects detected.</div>'}
@@ -676,7 +676,7 @@ def render_impact_results(
     </div>
     '''
 # =============================================================================
-# 🎨 GRADIO UI - WEBSITE-STYLE IMPACT PREDICTOR
+# ?? GRADIO UI - WEBSITE-STYLE IMPACT PREDICTOR
 # =============================================================================
 
 # Custom CSS matching website theme
@@ -714,7 +714,7 @@ with gr.Blocks(
     <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; align-items: center; gap: 12px;">
             <div style="background: rgba(6, 182, 212, 0.2); padding: 8px; border-radius: 8px;">
-                <span style="font-size: 24px;">🌐</span>
+                <span style="font-size: 24px;">??</span>
             </div>
             <div>
                 <h1 style="color: white; font-size: 20px; font-weight: 700; margin: 0;">Village Infrastructure Impact Predictor</h1>
@@ -731,7 +731,7 @@ with gr.Blocks(
         with gr.Column(scale=1):
             gr.HTML('''
             <div style="color: white; font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                <span style="color: #22d3ee;">🏗️</span> Build Network
+                <span style="color: #22d3ee;">???</span> Build Network
             </div>
             ''')
             
@@ -740,17 +740,17 @@ with gr.Blocks(
                 node_name = gr.Textbox(label="Name", placeholder="e.g., Main-Tank", show_label=False)
                 node_type = gr.Dropdown(choices=NODE_TYPES, value="Tank", label="Type", show_label=False)
                 node_health = gr.Slider(0, 1, value=0.95, step=0.05, label="Health")
-                add_node_btn = gr.Button("➕ Add Node", variant="secondary", size="sm")
+                add_node_btn = gr.Button("? Add Node", variant="secondary", size="sm")
             
             with gr.Group():
                 gr.HTML('<div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">Connect Nodes</div>')
                 from_dropdown = gr.Dropdown(choices=[], label="From", show_label=False)
                 to_dropdown = gr.Dropdown(choices=[], label="To", show_label=False)
-                add_edge_btn = gr.Button("🔗 Connect", variant="secondary", size="sm")
+                add_edge_btn = gr.Button("?? Connect", variant="secondary", size="sm")
             
             with gr.Row():
-                load_example_btn = gr.Button("📥 Load Example", size="sm")
-                clear_btn = gr.Button("🗑️ Clear All", size="sm")
+                load_example_btn = gr.Button("?? Load Example", size="sm")
+                clear_btn = gr.Button("??? Clear All", size="sm")
             
             status_box = gr.Markdown("*Ready to build*")
             network_display = gr.Markdown("*Network will appear here*")
@@ -761,7 +761,7 @@ with gr.Blocks(
         with gr.Column(scale=1):
             gr.HTML('''
             <div style="color: white; font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                <span style="color: #22d3ee;">⚡</span> Scenario Selection
+                <span style="color: #22d3ee;">?</span> Scenario Selection
             </div>
             ''')
             
@@ -794,7 +794,7 @@ with gr.Blocks(
             
             # Predict Button (cyan like website)
             predict_btn = gr.Button(
-                "📊 Predict Impact", 
+                "?? Predict Impact", 
                 variant="primary", 
                 size="lg",
             )
@@ -814,13 +814,13 @@ with gr.Blocks(
         with gr.Column(scale=2):
             gr.HTML('''
             <div style="color: white; font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                <span style="color: #22d3ee;">📊</span> Impact Prediction Results
+                <span style="color: #22d3ee;">??</span> Impact Prediction Results
             </div>
             ''')
             
             result_output = gr.HTML('''
             <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; border-radius: 12px; padding: 40px; text-align: center;">
-                <div style="font-size: 48px; margin-bottom: 16px;">🌐</div>
+                <div style="font-size: 48px; margin-bottom: 16px;">??</div>
                 <div style="color: white; font-size: 16px; font-weight: 600; margin-bottom: 8px;">Ready to Predict</div>
                 <div style="color: #94a3b8; font-size: 14px;">
                     Build a network or load the example, then select a node and failure scenario to see cascading effects.
@@ -911,7 +911,7 @@ with gr.Blocks(
 # =============================================================================
 
 if __name__ == "__main__":
-    print("�️ Village Infrastructure Impact Predictor launching...")
+    print("?? Village Infrastructure Impact Predictor launching...")
     print("   URL: http://localhost:7875")
     print("   Design: Matches React website ImpactPredictionPanel\n")
     demo.launch(

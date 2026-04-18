@@ -1,4 +1,4 @@
-﻿import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize lazily to ensure environment variables are loaded
 let genAI = null;
@@ -13,7 +13,7 @@ export async function processFeedbackWithAI(rawComment, rating, schemeName) {
     
     // Initialize client if not already done
     if (!genAI) {
-      console.log(`ðŸ”‘ Gemini API Key loaded: ${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}`);
+      console.log(`🔑 Gemini API Key loaded: ${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}`);
       genAI = new GoogleGenerativeAI(apiKey);
     }
 
@@ -66,7 +66,7 @@ Output: "Resident reported concerns about contractor work quality requiring atte
     const response = await result.response;
     const text = response.text();
     
-    console.log('ðŸ¤– Gemini AI Response:', text);
+    console.log('🤖 Gemini AI Response:', text);
     
     // Extract JSON from response (remove markdown code blocks if present)
     let jsonText = text.trim();
@@ -81,7 +81,7 @@ Output: "Resident reported concerns about contractor work quality requiring atte
       const aiAnalysis = JSON.parse(jsonMatch[0]);
       
       // Verify that no personal names appear in the summary
-      console.log('âœ… AI Anonymized Summary:', aiAnalysis.summary);
+      console.log('✅ AI Anonymized Summary:', aiAnalysis.summary);
       
       return {
         success: true,
@@ -92,7 +92,7 @@ Output: "Resident reported concerns about contractor work quality requiring atte
     throw new Error('Could not parse AI response');
     
   } catch (error) {
-    console.error('âŒ Gemini AI Error:', error.message || error);
+    console.error('❌ Gemini AI Error:', error.message || error);
     
     // Fallback to basic processing - NEVER expose raw comment
     return {

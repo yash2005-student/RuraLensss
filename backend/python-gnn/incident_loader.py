@@ -1,4 +1,4 @@
-﻿"""
+"""
 Real Incident Data Loader for Fine-Tuning
 Loads historical infrastructure failures from JSON/CSV files
 """
@@ -78,12 +78,12 @@ class InfrastructureIncidentLoader:
             else:
                 self.incidents = [data]  # Single incident
                 
-            print(f"âœ“ Loaded {len(self.incidents)} incidents from {self.incidents_file}")
+            print(f"✓ Loaded {len(self.incidents)} incidents from {self.incidents_file}")
         except FileNotFoundError:
-            print(f"âš  Incidents file not found: {self.incidents_file}")
+            print(f"⚠ Incidents file not found: {self.incidents_file}")
             self.incidents = []
         except json.JSONDecodeError as e:
-            print(f"âš  JSON parsing error: {e}")
+            print(f"⚠ JSON parsing error: {e}")
             self.incidents = []
     
     def _create_node_features(self, node: Dict) -> np.ndarray:
@@ -188,7 +188,7 @@ class InfrastructureIncidentLoader:
             edges = incident.get('edges', [])
             
             if len(nodes) == 0:
-                print(f"âš  Skipping incident {incident.get('incident_id')}: No nodes")
+                print(f"⚠ Skipping incident {incident.get('incident_id')}: No nodes")
                 return None
             
             # Create node feature matrix
@@ -243,7 +243,7 @@ class InfrastructureIncidentLoader:
             return data
             
         except Exception as e:
-            print(f"âš  Error converting incident {incident.get('incident_id')}: {e}")
+            print(f"⚠ Error converting incident {incident.get('incident_id')}: {e}")
             return None
     
     def __len__(self):
@@ -279,7 +279,7 @@ def load_real_incidents(incidents_file: str) -> List[Data]:
 if __name__ == "__main__":
     # Test loader
     loader = InfrastructureIncidentLoader("data/real_incidents.json")
-    print(f"\nðŸ“Š Loaded {len(loader)} incidents")
+    print(f"\n📊 Loaded {len(loader)} incidents")
     
     for i, data in enumerate(loader):
         print(f"\nIncident {i+1}: {data.incident_id}")
