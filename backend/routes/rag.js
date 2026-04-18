@@ -8,6 +8,77 @@ import AnonymousReport from '../models/AnonymousReport.js';
 
 const router = express.Router();
 
+function isTopPerformingSchemeQuestion(question = '') {
+  const q = question.toLowerCase();
+  return (
+    /top|best|highest/.test(q) &&
+    /scheme|perform|progress|success/.test(q)
+  );
+}
+
+function rankSchemeForPerformance(scheme) {
+  const progress = Number(scheme.overallProgress) || 0;
+  const utilized = Number(scheme.budgetUtilized) || 0;
+  const total = Number(scheme.totalBudget) || 0;
+  const utilizationRatio = total > 0 ? Math.min(utilized / total, 1.2) : 0;
+
+  const statusBonusMap = {
+    completed: 8,
+    'on-track': 4,
+    delayed: -12,
+    discrepant: -25
+  };
+  const statusBonus = statusBonusMap[scheme.status] ?? 0;
+
+  // Composite score: mostly progress, small contribution from healthy utilization, plus status quality.
+  const score = progress + (utilizationRatio * 10) + statusBonus;
+
+  return {
+    ...scheme,
+    score,
+    utilizationPercent: total > 0 ? Math.round((utilized / total) * 100) : 0
+  };
+}
+
+async function buildTopSchemeResponse({ question, scheme_id, maxCitations }) {
+  const filter = scheme_id ? { id: scheme_id } : {};
+  const schemes = await Scheme.find(filter)
+    .select('id name category village district status overallProgress totalBudget budgetUtilized')
+    .lean();
+
+  if (!schemes || schemes.length === 0) {
+    return null;
+  }
+
+  const ranked = schemes
+    .map(rankSchemeForPerformance)
+    .sort((a, b) => b.score - a.score);
+
+  const top = ranked[0];
+  const topN = ranked.slice(0, Math.min(maxCitations || 5, ranked.length));
+
+  const answer = [
+    `Top performing scheme is ${top.name} (${top.id}).`,
+    `Status: ${top.status}, Overall Progress: ${top.overallProgress || 0}%, Budget Utilization: ${top.utilizationPercent}% (${top.budgetUtilized || 0}/${top.totalBudget || 0}).`,
+    `This is based on scheme progress, status reliability, and budget utilization for the question: "${question}".`
+  ].join(' ');
+
+  const citations = topN.map((s) => ({
+    doc_id: `scheme-${s.id}`,
+    snippet: `Scheme ${s.id} (${s.name}) | Status: ${s.status} | Progress: ${s.overallProgress || 0}% | Budget: ${s.budgetUtilized || 0}/${s.totalBudget || 0} (${s.utilizationPercent}%)`,
+    score: Number(s.score.toFixed(3)),
+    metadata: {
+      source: 'structured-scheme-ranking',
+      scheme_id: s.id
+    }
+  }));
+
+  return {
+    answer,
+    citations
+  };
+}
+
 // Rate limiter: 10 queries per minute per user
 const ragRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -67,6 +138,27 @@ router.post('/', ragRateLimiter, async (req, res) => {
     // Sanitize PII from question before sending to Pathway
     const sanitizedQuestion = sanitizePII(question);
     const hasPII = containsPII(question);
+
+    // Structured intent: ranking/best-scheme questions should use DB metrics, not generic semantic retrieval.
+    if (isTopPerformingSchemeQuestion(sanitizedQuestion)) {
+      const structured = await buildTopSchemeResponse({
+        question: sanitizedQuestion,
+        scheme_id,
+        maxCitations: maxCitations
+      });
+
+      if (structured) {
+        const structuredResponse = {
+          answer: structured.answer,
+          citations: await enrichCitations(structured.citations, scheme_id, bbox),
+          trace_id,
+          cached: false
+        };
+
+        ragCache.set(cacheKey, structuredResponse);
+        return res.json(structuredResponse);
+      }
+    }
 
     // Log request (avoid logging full question if contains PII)
     console.log(`🔍 RAG Query from ${user_id}: ${hasPII ? '[QUESTION_CONTAINS_PII]' : sanitizedQuestion.substring(0, 100)}`);

@@ -7,7 +7,9 @@ import FormData from 'form-data';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Pathway Docker URL (the main RAG service)
-const PATHWAY_DOCKER_URL = process.env.PATHWAY_MCP_URL?.replace('/v1/retrieve', '') || 'http://localhost:8000';
+const PATHWAY_DOCKER_URL =
+  process.env.PATHWAY_MCP_URL?.replace(/\/v1\/(retrieve|pw_ai_answer)$/, '') ||
+  'http://localhost:8000';
 
 // Pathway Python API URL (for advanced extraction - optional)
 const PATHWAY_EXTRACTOR_URL = process.env.PATHWAY_EXTRACTOR_URL || 'http://localhost:8080';

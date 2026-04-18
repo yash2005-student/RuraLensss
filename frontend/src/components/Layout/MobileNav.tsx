@@ -1,4 +1,4 @@
-import { Home, Briefcase, Map, Menu, Shield } from 'lucide-react';
+import { Home, Briefcase, CloudSun, Map, Menu, Shield } from 'lucide-react';
 import { useVillageStore } from '../../store/villageStore';
 import { useLanguage } from '../../i18n/LanguageContext';
 
@@ -10,6 +10,7 @@ export default function MobileNav() {
   const navItems = [
     { id: 'dashboard', icon: Home, label: hi ? 'होम' : 'Home' },
     { id: 'schemes', icon: Briefcase, label: hi ? 'योजनाएं' : 'Schemes' },
+    { id: 'aqi-weather', icon: CloudSun, label: hi ? 'AQI/मौसम' : 'AQI/Weather' },
     { id: 'map', icon: Map, label: hi ? 'मैप' : 'Map' },
     { id: 'anonymous-reports', icon: Shield, label: hi ? 'रिपोर्ट' : 'Report' },
   ];

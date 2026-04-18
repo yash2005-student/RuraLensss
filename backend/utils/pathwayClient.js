@@ -116,10 +116,19 @@ class PathwayClient {
     for (let i = 0; i < docs.length; i++) {
       const doc = docs[i];
       const filePath = doc.metadata?.path || '';
+      const metadataDocId = doc.metadata?.doc_id || '';
       
       // Extract document ID from file path (e.g., "data/scheme_sch002.txt" -> "sch002")
       let doc_id = 'unknown';
-      if (filePath.includes('scheme_')) {
+      if (metadataDocId.startsWith('scheme_')) {
+        doc_id = metadataDocId.replace(/^scheme_/, '');
+      } else if (metadataDocId.startsWith('citizen_report_')) {
+        doc_id = metadataDocId.replace(/^citizen_report_/, '');
+      } else if (filePath.includes('/schemes/')) {
+        doc_id = filePath.split('/schemes/')[1] || 'unknown';
+      } else if (filePath.includes('/anonymousreports/')) {
+        doc_id = filePath.split('/anonymousreports/')[1] || 'unknown';
+      } else if (filePath.includes('scheme_')) {
         doc_id = filePath.match(/scheme_(.+)\.txt/)?.[1] || 'unknown';
       } else if (filePath.includes('citizen_report_')) {
         doc_id = filePath.match(/citizen_report_(.+)\.txt/)?.[1] || 'unknown';

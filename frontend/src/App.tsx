@@ -15,6 +15,7 @@ import MobileAnonymousReports from './components/Views/MobileAnonymousReports';
 import FieldWorkerView from './components/Views/FieldWorkerView';
 import MapView from './components/Views/MapView';
 import SchemesView from './components/Views/SchemesView';
+import AqiWeatherView from './components/Views/AqiWeatherView';
 import ImpactPredictorView from './components/Views/ImpactPredictorView';
 import MobileNav from './components/Layout/MobileNav';
 import MobileHeader from './components/Layout/MobileHeader';
@@ -87,6 +88,8 @@ function App() {
         return <MapView />;
       case 'schemes':
         return <SchemesView />;
+      case 'aqi-weather':
+        return <AqiWeatherView />;
       case 'reports':
       case 'anonymous-reports':
         return isMobile ? <MobileAnonymousReports /> : <AnonymousReportsView />;

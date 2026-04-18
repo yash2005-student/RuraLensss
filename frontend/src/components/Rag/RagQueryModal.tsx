@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { X, Send, Loader2, MapPin, ExternalLink, Clock, FileText, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Send, Loader2, MapPin, Clock, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import useRagQuery, { Citation } from '../../hooks/useRagQuery';
 import { format } from 'date-fns';
+
+const MAX_VISIBLE_SOURCES = 2;
 
 interface RagQueryModalProps {
   isOpen: boolean;
@@ -186,10 +188,10 @@ export default function RagQueryModal({
               {data.citations && data.citations.length > 0 && (
                 <div>
                   <h3 className="font-bold text-white mb-3">
-                    Sources ({data.citations.length})
+                    Sources ({Math.min(data.citations.length, MAX_VISIBLE_SOURCES)})
                   </h3>
                   <div className="space-y-3">
-                    {data.citations.map((citation, idx) => (
+                    {data.citations.slice(0, MAX_VISIBLE_SOURCES).map((citation, idx) => (
                       <div
                         key={idx}
                         className="bg-slate-800/50 border border-white/10 rounded-lg p-4 hover:bg-slate-800 transition-all"
@@ -233,13 +235,6 @@ export default function RagQueryModal({
                               Show on Map
                             </button>
                           )}
-                          <button
-                            onClick={() => window.open(`/api/docs/${citation.doc_id}`, '_blank')}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-slate-700/50 text-slate-300 text-sm rounded-lg hover:bg-slate-700 transition-colors border border-white/10"
-                          >
-                            <ExternalLink size={14} />
-                            Open Document
-                          </button>
                         </div>
                       </div>
                     ))}

@@ -5,7 +5,8 @@ import {
   ChevronRight,
   Map,
   Briefcase,
-  Shield
+  Shield,
+  CloudSun
 } from 'lucide-react';
 import { useVillageStore } from '../../store/villageStore';
 import { useLanguage } from '../../i18n/LanguageContext';
@@ -14,6 +15,7 @@ const menuItems = [
   { id: 'dashboard', icon: Home, labelKey: 'dashboard', label: 'Dashboard' },
   { id: 'map', icon: Map, labelKey: 'mapView', label: '3D Map View' },
   { id: 'schemes', icon: Briefcase, labelKey: 'govSchemes', label: 'Government Schemes' },
+  { id: 'aqi-weather', icon: CloudSun, labelKey: 'aqiWeather', label: 'AQI & Weather' },
   { id: 'anonymous-reports', icon: Shield, labelKey: 'citizenReports', label: 'Citizen Reports' },
   { id: 'settings', icon: Settings, labelKey: 'settings', label: 'Settings' },
 ];
@@ -27,13 +29,13 @@ export default function Sidebar() {
     if (userRole === 'field_worker') {
       // Field workers see limited menu
       return menuItems.filter(item => 
-        ['dashboard', 'map', 'anonymous-reports', 'settings'].includes(item.id)
+        ['dashboard', 'map', 'aqi-weather', 'anonymous-reports', 'settings'].includes(item.id)
       );
     }
     if (userRole === 'user') {
       // Citizens see basic menu including anonymous reports
       return menuItems.filter(item => 
-        ['dashboard', 'map', 'schemes', 'anonymous-reports', 'settings'].includes(item.id)
+        ['dashboard', 'map', 'schemes', 'aqi-weather', 'anonymous-reports', 'settings'].includes(item.id)
       );
     }
     // Admin sees all

@@ -1,0 +1,24 @@
+services:
+  pathway-rag:
+    build:
+      context: ./backend/pathway-rag
+      dockerfile: Dockerfile
+    container_name: ruralens-pathway-rag
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    environment:
+      - PATHWAY_DATA_DIR=/app/data
+      - PATHWAY_TOP_K=5
+      - PATHWAY_INDEX_SOURCE=${PATHWAY_INDEX_SOURCE:-mongodb}
+      - PATHWAY_MCP_TOKEN=${PATHWAY_MCP_TOKEN:-}
+      - MONGODB_URI=${MONGODB_URI:-}
+      - PATHWAY_MONGODB_DB=${PATHWAY_MONGODB_DB:-}
+      - PATHWAY_SCHEMES_COLLECTION=${PATHWAY_SCHEMES_COLLECTION:-schemes}
+      - PATHWAY_REPORTS_COLLECTION=${PATHWAY_REPORTS_COLLECTION:-anonymousreports}
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY:-}
+      - HUGGINGFACE_MODEL=${HUGGINGFACE_MODEL:-meta-llama/Llama-3.1-8B-Instruct}
+    volumes:
+      - ./backend/pathway-data:/app/data
+    restart: unless-stopped
